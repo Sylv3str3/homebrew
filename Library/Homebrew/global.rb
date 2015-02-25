@@ -26,14 +26,17 @@ def cache
     if home_cache.directory? and home_cache.writable_real?
       home_cache
     else
-      Pathname.new("~/Library/Caches/Homebrew").expand_path Module.new {
-        def mkpath
-          unless exist?
-            super
-            chmod 0744
+      root_cache = Pathname.new("~/Library/Caches/Homebrew").expand_path
+	class << root_cache
+	  alias :oldmkpath :mkpath
+	  def mkpath
+	    unless mkpath
+  	      oldmkpath
+              chmod 0744
+	    end
           end
         end
-      }
+        root_cache
     end
   end
 end
