@@ -1,3 +1,7 @@
+Fork specific notes
+===================
+This fork is only intended for multi-user deployments. Install it as root with bin/installBrew.rb and every user should be able to install his brews in ~/.brew without requiring rights change to /usr/local. Unforeseen bugs may be present.
+
 # Homebrew
 Features, usage and installation instructions are [summarised on the homepage](http://brew.sh).
 

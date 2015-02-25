@@ -13,7 +13,7 @@ module Homebrew
     # ensure GIT_CONFIG is unset as we need to operate on .git/config
     ENV.delete('GIT_CONFIG')
 
-    cd HOMEBREW_REPOSITORY
+    cd HOMEBREW_SEREPOSITORY
     git_init_if_necessary
 
     tapped_formulae = []

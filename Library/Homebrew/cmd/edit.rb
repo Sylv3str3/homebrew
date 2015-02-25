@@ -2,7 +2,7 @@ require 'formula'
 
 module Homebrew
   def edit
-    unless (HOMEBREW_REPOSITORY/'.git').directory?
+    unless (HOMEBREW_SEREPOSITORY/'.git').directory?
       raise <<-EOS.undent
         Changes will be lost!
         The first time you `brew update', all local changes will be lost, you should
@@ -16,12 +16,12 @@ module Homebrew
       if editor == "mate" or editor == "subl"
         # If the user is using TextMate or Sublime Text,
         # give a nice project view instead.
-        exec_editor HOMEBREW_REPOSITORY+"bin/brew",
-                    HOMEBREW_REPOSITORY+'README.md',
-                    HOMEBREW_REPOSITORY+".gitignore",
+        exec_editor HOMEBREW_SEREPOSITORY+"bin/brew",
+                    HOMEBREW_SEREPOSITORY+'README.md',
+                    HOMEBREW_SEREPOSITORY+".gitignore",
                     *library_folders
       else
-        exec_editor HOMEBREW_REPOSITORY
+        exec_editor HOMEBREW_SEREPOSITORY
       end
     else
       # Don't use ARGV.formulae as that will throw if the file doesn't parse

@@ -1131,7 +1131,7 @@ def check_for_unlinked_but_not_keg_only
   unlinked = HOMEBREW_CELLAR.children.reject do |rack|
     if not rack.directory?
       true
-    elsif not (HOMEBREW_REPOSITORY/"Library/LinkedKegs"/rack.basename).directory?
+    elsif not (HOMEBREW_SEREPOSITORY/"Library/LinkedKegs"/rack.basename).directory?
       begin
         Formulary.factory(rack.basename.to_s).keg_only?
       rescue FormulaUnavailableError

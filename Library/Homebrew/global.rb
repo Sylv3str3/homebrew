@@ -26,11 +26,11 @@ def cache
     if home_cache.directory? and home_cache.writable_real?
       home_cache
     else
-      Pathname.new("/Library/Caches/Homebrew").extend Module.new {
+      Pathname.new("~/Library/Caches/Homebrew").expand_path Module.new {
         def mkpath
           unless exist?
             super
-            chmod 0775
+            chmod 0744
           end
         end
       }
@@ -49,25 +49,24 @@ if not defined? HOMEBREW_BREW_FILE
 end
 
 # Where we link under
-HOMEBREW_PREFIX = Pathname.new(HOMEBREW_BREW_FILE).dirname.parent
+HOMEBREW_PREFIX = Pathname.new("~/.brew").expand_path
 
 # Where .git is found
 HOMEBREW_REPOSITORY = Pathname.new(HOMEBREW_BREW_FILE).realpath.dirname.parent
+HOMEBREW_SEREPOSITORY = Pathname.new("~/.brew").expand_path
 
-HOMEBREW_LIBRARY = HOMEBREW_REPOSITORY/"Library"
-HOMEBREW_CONTRIB = HOMEBREW_REPOSITORY/"Library/Contributions"
+HOMEBREW_LIBRARY = HOMEBREW_SEREPOSITORY/"Library"
+HOMEBREW_CONTRIB = HOMEBREW_SEREPOSITORY/"Library/Contributions"
 
 # Where we store built products; /usr/local/Cellar if it exists,
 # otherwise a Cellar relative to the Repository.
-HOMEBREW_CELLAR = if (HOMEBREW_PREFIX+"Cellar").exist?
-  HOMEBREW_PREFIX+"Cellar"
-else
-  HOMEBREW_REPOSITORY+"Cellar"
-end
+HOMEBREW_CELLAR = Pathname.new("~/.brew/Cellar").expand_path
 
 HOMEBREW_LOGS = Pathname.new(ENV['HOMEBREW_LOGS'] || '~/Library/Logs/Homebrew/').expand_path
 
-HOMEBREW_TEMP = Pathname.new(ENV.fetch('HOMEBREW_TEMP', '/tmp'))
+HOMEBREW_TEMP = Pathname.new('~/.brew/tmp').expand_path
+
+FileUtils.mkdir_p HOMEBREW_TEMP if not File.exist? HOMEBREW_TEMP
 
 if RbConfig.respond_to?(:ruby)
   RUBY_PATH = Pathname.new(RbConfig.ruby)
