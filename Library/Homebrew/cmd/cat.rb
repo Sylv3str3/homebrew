@@ -7,7 +7,7 @@ module Homebrew
     raise FormulaUnspecifiedError if formulae.empty?
     raise "`brew cat` doesn't support multiple arguments" if formulae.size > 1
 
-    cd HOMEBREW_REPOSITORY
+    cd HOMEBREW_SEREPOSITORY
     exec "cat", formulae.first.path, *ARGV.options_only
   end
 end

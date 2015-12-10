@@ -188,27 +188,27 @@ module Homebrew
 
   def self.git_origin
     return unless Utils.git_available?
-    HOMEBREW_REPOSITORY.cd { `git config --get remote.origin.url 2>/dev/null`.chuzzle }
+    HOMEBREW_SEREPOSITORY.cd { `git config --get remote.origin.url 2>/dev/null`.chuzzle }
   end
 
   def self.git_head
     return unless Utils.git_available?
-    HOMEBREW_REPOSITORY.cd { `git rev-parse --verify -q HEAD 2>/dev/null`.chuzzle }
+    HOMEBREW_SEREPOSITORY.cd { `git rev-parse --verify -q HEAD 2>/dev/null`.chuzzle }
   end
 
   def self.git_short_head
     return unless Utils.git_available?
-    HOMEBREW_REPOSITORY.cd { `git rev-parse --short=4 --verify -q HEAD 2>/dev/null`.chuzzle }
+    HOMEBREW_SEREPOSITORY.cd { `git rev-parse --short=4 --verify -q HEAD 2>/dev/null`.chuzzle }
   end
 
   def self.git_last_commit
     return unless Utils.git_available?
-    HOMEBREW_REPOSITORY.cd { `git show -s --format="%cr" HEAD 2>/dev/null`.chuzzle }
+    HOMEBREW_SEREPOSITORY.cd { `git show -s --format="%cr" HEAD 2>/dev/null`.chuzzle }
   end
 
   def self.git_last_commit_date
     return unless Utils.git_available?
-    HOMEBREW_REPOSITORY.cd { `git show -s --format="%cd" --date=short HEAD 2>/dev/null`.chuzzle }
+    HOMEBREW_SEREPOSITORY.cd { `git show -s --format="%cd" --date=short HEAD 2>/dev/null`.chuzzle }
   end
 
   def self.homebrew_version_string

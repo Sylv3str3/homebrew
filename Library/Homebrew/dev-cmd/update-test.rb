@@ -2,7 +2,7 @@ require "extend/ENV"
 
 module Homebrew
   def update_test
-    cd HOMEBREW_REPOSITORY
+    cd HOMEBREW_SEREPOSITORY
     start_sha1 = Utils.popen_read("git", "rev-parse", "origin/master").chomp
     end_sha1 = Utils.popen_read("git", "rev-parse", "HEAD").chomp
 
@@ -11,10 +11,10 @@ module Homebrew
 
       oh1 "Setup test environment..."
       # copy Homebrew installation
-      safe_system "git", "clone", "--local", "#{HOMEBREW_REPOSITORY}/.git", "."
+      safe_system "git", "clone", "--local", "#{HOMEBREW_SEREPOSITORY}/.git", "."
 
       # set git origin to another copy
-      safe_system "git", "clone", "--local", "--bare", "#{HOMEBREW_REPOSITORY}/.git", "remote.git"
+      safe_system "git", "clone", "--local", "--bare", "#{HOMEBREW_SEREPOSITORY}/.git", "remote.git"
       safe_system "git", "config", "remote.origin.url", "#{curdir}/remote.git"
 
       # force push origin to end_sha1

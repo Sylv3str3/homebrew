@@ -132,7 +132,7 @@ module Homebrew
 
         # If they haven't updated in 48 hours (172800 seconds), that
         # might explain the error
-        master = HOMEBREW_REPOSITORY/".git/refs/heads/master"
+        master = HOMEBREW_SEREPOSITORY/".git/refs/heads/master"
         if master.exist? && (Time.now.to_i - File.mtime(master).to_i) > 172800
           ohai "You haven't updated Homebrew in a while."
           puts <<-EOS.undent

@@ -98,13 +98,13 @@ Dir.chdir "/usr"
 
 ####################################################################### script
 abort "MacOS too old, see: https://github.com/mistydemeo/tigerbrew" if macos_version < "10.5"
-abort <<-EOABORT unless `groups`.split.include? "admin"
-This script requires the user #{ENV['USER']} to be an Administrator. If this
-sucks for you then you can install Homebrew in your home directory or however
-you please; please refer to our homepage. If you still want to use this script
-set your user to be an Administrator in System Preferences or `su' to a
-non-root user with Administrator privileges.
-EOABORT
+#abort <<-EOABORT unless `groups`.split.include? "admin"
+#This script requires the user #{ENV['USER']} to be an Administrator. If this
+#sucks for you then you can install Homebrew in your home directory or however
+#you please; please refer to our homepage. If you still want to use this script
+#set your user to be an Administrator in System Preferences or `su' to a
+#non-root user with Administrator privileges.
+#EOABORT
 abort <<-EOABORT unless Dir["#{HOMEBREW_PREFIX}/.git/*"].empty?
 It appears Homebrew is already installed. If your intent is to reinstall you
 should do the following before running this installer again:

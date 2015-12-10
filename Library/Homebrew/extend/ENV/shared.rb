@@ -192,7 +192,7 @@ module SharedEnvExtension
   def userpaths!
     paths = self["PATH"].split(File::PATH_SEPARATOR)
     # put Superenv.bin and opt path at the first
-    new_paths = paths.select { |p| p.start_with?("#{HOMEBREW_REPOSITORY}/Library/ENV") || p.start_with?("#{HOMEBREW_PREFIX}/opt") }
+    new_paths = paths.select { |p| p.start_with?("#{HOMEBREW_SEREPOSITORY}/Library/ENV") || p.start_with?("#{HOMEBREW_PREFIX}/opt") }
     # XXX hot fix to prefer brewed stuff (e.g. python) over /usr/bin.
     new_paths << "#{HOMEBREW_PREFIX}/bin"
     # reset of self["PATH"]

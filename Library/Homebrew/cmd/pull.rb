@@ -86,11 +86,11 @@ module Homebrew
 
       if !testing_job && tap_name = tap(url)
         user = url_match[1].downcase
-        tap_dir = HOMEBREW_REPOSITORY/"Library/Taps/#{user}/homebrew-#{tap_name}"
+        tap_dir = HOMEBREW_SEREPOSITORY/"Library/Taps/#{user}/homebrew-#{tap_name}"
         safe_system "brew", "tap", "#{user}/#{tap_name}" unless tap_dir.exist?
         Dir.chdir tap_dir
       else
-        Dir.chdir HOMEBREW_REPOSITORY
+        Dir.chdir HOMEBREW_SEREPOSITORY
       end
 
       # The cache directory seems like a good place to put patches.

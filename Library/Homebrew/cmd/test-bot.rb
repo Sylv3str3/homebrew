@@ -69,7 +69,7 @@ module Homebrew
     if tap
       tap.path
     else
-      HOMEBREW_REPOSITORY
+      HOMEBREW_SEREPOSITORY
     end
   end
 
@@ -83,7 +83,7 @@ module Homebrew
       @puts_output_on_success = options[:puts_output_on_success]
       @name = command[1].delete("-")
       @status = :running
-      @repository = options[:repository] || HOMEBREW_REPOSITORY
+      @repository = options[:repository] || HOMEBREW_SEREPOSITORY
       @time = 0
     end
 
@@ -657,7 +657,7 @@ module Homebrew
       git "reset", "--hard"
       git "checkout", "-f", "master"
       git "clean", "-ffdx" unless ENV["HOMEBREW_RUBY"] == "1.8.7"
-      pr_locks = "#{HOMEBREW_REPOSITORY}/.git/refs/remotes/*/pr/*/*.lock"
+      pr_locks = "#{HOMEBREW_SEREPOSITORY}/.git/refs/remotes/*/pr/*/*.lock"
       Dir.glob(pr_locks) { |lock| FileUtils.rm_rf lock }
     end
 

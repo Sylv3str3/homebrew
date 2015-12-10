@@ -80,7 +80,7 @@ class Sandbox
 
   def deny_write_homebrew_library
     deny_write_path HOMEBREW_LIBRARY
-    deny_write_path HOMEBREW_REPOSITORY/".git"
+    deny_write_path HOMEBREW_SEREPOSITORY/".git"
     deny_write HOMEBREW_BREW_FILE
   end
 

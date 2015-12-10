@@ -374,7 +374,7 @@ class CoreFormulaRepository < Tap
     @user = "Homebrew"
     @repo = "homebrew"
     @name = "Homebrew/homebrew"
-    @path = HOMEBREW_REPOSITORY
+    @path = HOMEBREW_SEREPOSITORY
   end
 
   def self.instance

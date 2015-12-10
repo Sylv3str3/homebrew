@@ -40,7 +40,7 @@ class Descriptions
     cache_mtime = File.mtime(CACHE_FILE)
     ref_master = ".git/refs/heads/master"
 
-    master = HOMEBREW_REPOSITORY/ref_master
+    master = HOMEBREW_SEREPOSITORY/ref_master
 
     # If ref_master doesn't exist, it means brew update is never run.
     # Since cache is found, we can assume it's fresh.

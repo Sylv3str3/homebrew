@@ -427,12 +427,12 @@ class Checks
   end
 
   def check_access_homebrew_repository
-    unless HOMEBREW_REPOSITORY.writable_real? then <<-EOS.undent
-      The #{HOMEBREW_REPOSITORY} is not writable.
+    unless HOMEBREW_SEREPOSITORY.writable_real? then <<-EOS.undent
+      The #{HOMEBREW_SEREPOSITORY} is not writable.
 
-      You should probably change the ownership and permissions of #{HOMEBREW_REPOSITORY}
+      You should probably change the ownership and permissions of #{HOMEBREW_SEREPOSITORY}
       back to your user account.
-        sudo chown -R $(whoami) #{HOMEBREW_REPOSITORY}
+        sudo chown -R $(whoami) #{HOMEBREW_SEREPOSITORY}
     EOS
     end
   end
@@ -878,7 +878,7 @@ class Checks
 
   def check_filesystem_case_sensitive
     volumes = Volumes.new
-    case_sensitive_vols = [HOMEBREW_PREFIX, HOMEBREW_REPOSITORY, HOMEBREW_CELLAR, HOMEBREW_TEMP].select do |dir|
+    case_sensitive_vols = [HOMEBREW_PREFIX, HOMEBREW_SEREPOSITORY, HOMEBREW_CELLAR, HOMEBREW_TEMP].select do |dir|
       # We select the dir as being case-sensitive if either the UPCASED or the
       # downcased variant is missing.
       # Of course, on a case-insensitive fs, both exist because the os reports so.
@@ -943,7 +943,7 @@ class Checks
   end
 
   def check_git_origin
-    return if !Utils.git_available? || !(HOMEBREW_REPOSITORY/".git").exist?
+    return if !Utils.git_available? || !(HOMEBREW_SEREPOSITORY/".git").exist?
 
     origin = Homebrew.git_origin
 
@@ -952,7 +952,7 @@ class Checks
 
       Without a correctly configured origin, Homebrew won't update
       properly. You can solve this by adding the Homebrew remote:
-        cd #{HOMEBREW_REPOSITORY}
+        cd #{HOMEBREW_SEREPOSITORY}
         git remote add origin https://github.com/Homebrew/homebrew.git
       EOS
     elsif origin !~ /(mxcl|Homebrew)\/homebrew(\.git)?$/ then <<-EOS.undent
@@ -1056,7 +1056,7 @@ class Checks
 
   def check_git_status
     return unless Utils.git_available?
-    HOMEBREW_REPOSITORY.cd do
+    HOMEBREW_SEREPOSITORY.cd do
       unless `git status --untracked-files=all --porcelain -- Library/Homebrew/ 2>/dev/null`.chomp.empty?
         <<-EOS.undent_________________________________________________________72
       You have uncommitted modifications to Homebrew
@@ -1150,7 +1150,7 @@ class Checks
 
   def check_for_outdated_homebrew
     return unless Utils.git_available?
-    HOMEBREW_REPOSITORY.cd do
+    HOMEBREW_SEREPOSITORY.cd do
       if File.directory? ".git"
         local = `git rev-parse -q --verify refs/remotes/origin/master`.chomp
         remote = /^([a-f0-9]{40})/.match(`git ls-remote origin refs/heads/master 2>/dev/null`)

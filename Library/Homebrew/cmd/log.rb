@@ -3,7 +3,7 @@ require "formula"
 module Homebrew
   def log
     if ARGV.named.empty?
-      cd HOMEBREW_REPOSITORY
+      cd HOMEBREW_SEREPOSITORY
       git_log
     else
       path = Formulary.path(ARGV.named.first)

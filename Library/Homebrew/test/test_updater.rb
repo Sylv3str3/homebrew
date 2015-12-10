@@ -45,7 +45,7 @@ class UpdaterTests < Homebrew::TestCase
   end
 
   def setup
-    @updater = UpdaterMock.new(HOMEBREW_REPOSITORY)
+    @updater = UpdaterMock.new(HOMEBREW_SEREPOSITORY)
     @report = Report.new
   end
 

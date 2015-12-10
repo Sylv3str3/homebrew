@@ -63,7 +63,7 @@ module Homebrew
 
     # Exclude the repository and cache, if they are located under the prefix
     dirs.delete HOMEBREW_CACHE.relative_path_from(HOMEBREW_PREFIX).to_s
-    dirs.delete HOMEBREW_REPOSITORY.relative_path_from(HOMEBREW_PREFIX).to_s
+    dirs.delete HOMEBREW_SEREPOSITORY.relative_path_from(HOMEBREW_PREFIX).to_s
     dirs.delete "etc"
     dirs.delete "var"
 

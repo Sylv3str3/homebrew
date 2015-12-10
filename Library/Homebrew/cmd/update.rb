@@ -37,7 +37,7 @@ module Homebrew
     migrate_taps
 
     report = Report.new
-    master_updater = Updater.new(HOMEBREW_REPOSITORY)
+    master_updater = Updater.new(HOMEBREW_SEREPOSITORY)
     master_updater.pull!
     master_updated = master_updater.updated?
     if master_updated
@@ -354,7 +354,7 @@ class Updater
   private
 
   def formula_directory
-    if repository == HOMEBREW_REPOSITORY
+    if repository == HOMEBREW_SEREPOSITORY
       "Library/Formula"
     elsif repository.join("Formula").directory?
       "Formula"

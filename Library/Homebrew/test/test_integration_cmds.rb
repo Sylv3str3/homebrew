@@ -76,7 +76,7 @@ class IntegrationCommandTests < Homebrew::TestCase
   end
 
   def test_repository
-    assert_match HOMEBREW_REPOSITORY.to_s,
+    assert_match HOMEBREW_SEREPOSITORY.to_s,
                  cmd("--repository")
   end
 end
