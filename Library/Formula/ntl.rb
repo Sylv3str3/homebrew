@@ -1,20 +1,24 @@
-require "formula"
-
 class Ntl < Formula
+  desc "C++ number theory library"
   homepage "http://www.shoup.net/ntl"
-  url "http://www.shoup.net/ntl/ntl-6.2.1.tar.gz"
-  sha1 "3b9ab3bedb0b2e9b5ee322d60745be5caf1c743f"
+  url "http://www.shoup.net/ntl/ntl-9.3.0.tar.gz"
+  sha256 "8f31508a9176b3fc843f08468b1632017f2450677bfd5147ead5136e0f24b68f"
 
   bottle do
     cellar :any
-    sha1 "b55331990e2df310d694d5ae67dc3a55d6f18fd1" => :mavericks
-    sha1 "bd1f0789b9ebefb00eabd5d9de5f5dc2fe08bbc7" => :mountain_lion
-    sha1 "0f7793a186aca6d6ea229b678575a008d3e1911b" => :lion
+    sha256 "caa258ebeb39f602cef0627b3f3391136a79bd1ce9d81bc727f104a6e65f8feb" => :yosemite
+    sha256 "92fa4146b889fd7a0b4dd50aed248cfe310fb3e7cb3b65d608aca26298331b46" => :mavericks
+    sha256 "dd1f71b5dd429df7cc7254a2b5c99ceb844ad2ba8cdc4e258fb22db4ccf68ec3" => :mountain_lion
   end
 
+  depends_on "gmp" => :optional
+
   def install
+    args = ["PREFIX=#{prefix}"]
+    args << "NTL_GMP_LIP=on" if build.with? "gmp"
+
     cd "src" do
-      system "./configure", "PREFIX=#{prefix}"
+      system "./configure", *args
       system "make"
       system "make", "check"
       system "make", "install"

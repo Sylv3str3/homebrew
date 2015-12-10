@@ -1,14 +1,14 @@
 class Ffmpeg < Formula
+  desc "Play, record, convert, and stream audio and video"
   homepage "https://ffmpeg.org/"
-  url "https://www.ffmpeg.org/releases/ffmpeg-2.5.4.tar.bz2"
-  sha1 "e7d0bab14e82876762531a883c6b48918631d48c"
-
-  head "git://git.videolan.org/ffmpeg.git"
+  url "https://ffmpeg.org/releases/ffmpeg-2.8.3.tar.bz2"
+  sha256 "1bcf993a71839bb4a37eaa0c51daf315932b6dad6089f672294545cc51a5caf6"
+  head "https://github.com/FFmpeg/FFmpeg.git"
 
   bottle do
-    sha1 "1d2f2630e86a06519f36263914ab79dc2f2fef72" => :yosemite
-    sha1 "d2dcb0fd8c650ad8b106ab3ab4fcd0b5512eb6aa" => :mavericks
-    sha1 "cddc9c78521770bc529e85f80f842dff678bc1e6" => :mountain_lion
+    sha256 "8f7c153e2657663c173a7062a7375c18501f1f985b98e8b6854746053e7f3c78" => :el_capitan
+    sha256 "9563c03fb1861b755c5869489824b2b676ba53322fdb2e5122c1e187a15e3136" => :yosemite
+    sha256 "51350b8c1b8629ae26acc638a2e4b75ec2b3785e426d40084594c2d9a803a9c3" => :mavericks
   end
 
   option "without-x264", "Disable H.264 encoder"
@@ -31,11 +31,13 @@ class Ffmpeg < Formula
   option "with-x265", "Enable x265 encoder"
   option "with-libsoxr", "Enable the soxr resample library"
   option "with-webp", "Enable using libwebp to encode WEBP images"
+  option "with-zeromq", "Enable using libzeromq to receive commands sent through a libzeromq client"
+  option "with-snappy", "Enable Snappy library"
 
   depends_on "pkg-config" => :build
 
   # manpages won't be built without texi2html
-  depends_on "texi2html" => :build if MacOS.version >= :mountain_lion
+  depends_on "texi2html" => :build
   depends_on "yasm" => :build
 
   depends_on "x264" => :recommended
@@ -54,6 +56,7 @@ class Ffmpeg < Formula
   depends_on "libass" => :optional
   depends_on "openjpeg" => :optional
   depends_on "sdl" if build.with? "ffplay"
+  depends_on "snappy" => :optional
   depends_on "speex" => :optional
   depends_on "schroedinger" => :optional
   depends_on "fdk-aac" => :optional
@@ -68,6 +71,8 @@ class Ffmpeg < Formula
   depends_on "openssl" => :optional
   depends_on "libssh" => :optional
   depends_on "webp" => :optional
+  depends_on "zeromq" => :optional
+  depends_on "libbs2b" => :optional
 
   def install
     args = ["--prefix=#{prefix}",
@@ -82,10 +87,13 @@ class Ffmpeg < Formula
             "--host-ldflags=#{ENV.ldflags}",
            ]
 
+    args << "--enable-opencl" if MacOS.version > :lion
+
     args << "--enable-libx264" if build.with? "x264"
     args << "--enable-libmp3lame" if build.with? "lame"
     args << "--enable-libvo-aacenc" if build.with? "libvo-aacenc"
     args << "--enable-libxvid" if build.with? "xvid"
+    args << "--enable-libsnappy" if build.with? "snappy"
 
     args << "--enable-libfontconfig" if build.with? "fontconfig"
     args << "--enable-libfreetype" if build.with? "freetype"
@@ -110,12 +118,14 @@ class Ffmpeg < Formula
     args << "--enable-libvidstab" if build.with? "libvidstab"
     args << "--enable-libx265" if build.with? "x265"
     args << "--enable-libwebp" if build.with? "webp"
+    args << "--enable-libzmq" if build.with? "zeromq"
+    args << "--enable-libbs2b" if build.with? "libbs2b"
     args << "--disable-indev=qtkit" if build.without? "qtkit"
 
     if build.with? "openjpeg"
       args << "--enable-libopenjpeg"
       args << "--disable-decoder=jpeg2000"
-      args << "--extra-cflags=" + %x(pkg-config --cflags libopenjpeg).chomp
+      args << "--extra-cflags=" + `pkg-config --cflags libopenjpeg`.chomp
     end
 
     # These librares are GPL-incompatible, and require ffmpeg be built with
@@ -125,7 +135,7 @@ class Ffmpeg < Formula
     end
 
     # A bug in a dispatch header on 10.10, included via CoreFoundation,
-    # prevents GCC from building VDA support. GCC has no probles on
+    # prevents GCC from building VDA support. GCC has no problems on
     # 10.9 and earlier.
     # See: https://github.com/Homebrew/homebrew/issues/33741
     if MacOS.version < :yosemite || ENV.compiler == :clang
@@ -135,7 +145,7 @@ class Ffmpeg < Formula
     end
 
     # For 32-bit compilation under gcc 4.2, see:
-    # http://trac.macports.org/ticket/20938#comment:22
+    # https://trac.macports.org/ticket/20938#comment:22
     ENV.append_to_cflags "-mdynamic-no-pic" if Hardware.is_32_bit? && Hardware::CPU.intel? && ENV.compiler == :clang
 
     system "./configure", *args

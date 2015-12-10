@@ -1,14 +1,15 @@
 class Curl < Formula
+  desc "Get a file from an HTTP, HTTPS or FTP server"
   homepage "http://curl.haxx.se/"
-  url "http://curl.haxx.se/download/curl-7.40.0.tar.bz2"
-  mirror "http://ftp.sunet.se/pub/www/utilities/curl/curl-7.40.0.tar.bz2"
-  sha256 "899109eb3900fa6b8a2f995df7f449964292776a04763e94fae640700f883fba"
+  url "https://github.com/bagder/curl/releases/download/curl-7_46_0/curl-7.46.0.tar.bz2"
+  mirror "http://curl.haxx.se/download/curl-7.46.0.tar.bz2"
+  sha256 "b7d726cdd8ed4b6db0fa1b474a3c59ebbbe4dcd4c61ac5e7ade0e0270d3195ad"
 
   bottle do
     cellar :any
-    sha1 "a5ba00d51a113752e962ba8ee0911c1c496d6cbc" => :yosemite
-    sha1 "c36652236b7b624913370adf309c9e838c571018" => :mavericks
-    sha1 "624a82135884081cef194e5313e0652a16b240b0" => :mountain_lion
+    sha256 "2c307a334fd93b8776054d327e387bc34291f3a8fef5db5de8ec5d227a220b45" => :el_capitan
+    sha256 "cbc2ffc4a6c771f024a59edd27fb2d2f38763abe7da94b52070f0242b9ab0017" => :yosemite
+    sha256 "f0140e5c3e797a5853d5068655de659effa1c486ae9545ba20052d2ae5d43c68" => :mavericks
   end
 
   keg_only :provided_by_osx
@@ -20,17 +21,20 @@ class Curl < Formula
   option "with-gssapi", "Build with GSSAPI/Kerberos authentication support."
   option "with-libmetalink", "Build with libmetalink support."
   option "with-libressl", "Build with LibreSSL instead of Secure Transport or OpenSSL"
+  option "with-nghttp2", "Build with HTTP/2 support (requires OpenSSL or LibreSSL)"
 
   deprecated_option "with-idn" => "with-libidn"
   deprecated_option "with-rtmp" => "with-rtmpdump"
   deprecated_option "with-ssh" => "with-libssh2"
   deprecated_option "with-ares" => "with-c-ares"
 
-  if MacOS.version >= :mountain_lion
+  # HTTP/2 support requires OpenSSL 1.0.2+ or LibreSSL 2.1.3+ for ALPN Support
+  # which is currently not supported by Secure Transport (DarwinSSL).
+  if MacOS.version < :mountain_lion || (build.with?("nghttp2") && build.without?("libressl"))
+    depends_on "openssl"
+  else
     option "with-openssl", "Build with OpenSSL instead of Secure Transport"
     depends_on "openssl" => :optional
-  else
-    depends_on "openssl"
   end
 
   depends_on "pkg-config" => :build
@@ -40,6 +44,7 @@ class Curl < Formula
   depends_on "c-ares" => :optional
   depends_on "libmetalink" => :optional
   depends_on "libressl" => :optional
+  depends_on "nghttp2" => :optional
 
   def install
     # Throw an error if someone actually tries to rock both SSL choices.
@@ -47,7 +52,7 @@ class Curl < Formula
     if build.with?("libressl") && build.with?("openssl")
       ohai <<-EOS.undent
       --with-openssl and --with-libressl are both specified and
-      curl can only use one at a time; proceeding with openssl.
+      curl can only use one at a time; proceeding with libressl.
       EOS
     end
 
@@ -61,14 +66,14 @@ class Curl < Formula
     # cURL has a new firm desire to find ssl with PKG_CONFIG_PATH instead of using
     # "--with-ssl" any more. "when possible, set the PKG_CONFIG_PATH environment
     # variable instead of using this option". Multi-SSL choice breaks w/o using it.
-    if MacOS.version < :mountain_lion || build.with?("openssl")
-      ENV.prepend_path "PKG_CONFIG_PATH", "#{Formula["openssl"].opt_prefix}/lib/pkgconfig"
-      args << "--with-ssl=#{Formula["openssl"].opt_prefix}"
-      args << "--with-ca-bundle=#{etc}/openssl/cert.pem"
-    elsif build.with? "libressl"
+    if build.with? "libressl"
       ENV.prepend_path "PKG_CONFIG_PATH", "#{Formula["libressl"].opt_prefix}/lib/pkgconfig"
       args << "--with-ssl=#{Formula["libressl"].opt_prefix}"
       args << "--with-ca-bundle=#{etc}/libressl/cert.pem"
+    elsif MacOS.version < :mountain_lion || build.with?("openssl") || build.with?("nghttp2")
+      ENV.prepend_path "PKG_CONFIG_PATH", "#{Formula["openssl"].opt_prefix}/lib/pkgconfig"
+      args << "--with-ssl=#{Formula["openssl"].opt_prefix}"
+      args << "--with-ca-bundle=#{etc}/openssl/cert.pem"
     else
       args << "--with-darwinssl"
     end
@@ -93,7 +98,7 @@ class Curl < Formula
     # Fetch the curl tarball and see that the checksum matches.
     # This requires a network connection, but so does Homebrew in general.
     filename = (testpath/"test.tar.gz")
-    system "#{bin}/curl", stable.url, "-o", filename
+    system "#{bin}/curl", "-L", stable.url, "-o", filename
     filename.verify_checksum stable.checksum
   end
 end

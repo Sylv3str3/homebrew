@@ -1,11 +1,9 @@
-require "formula"
-
-class FrameworkPython < Requirement
+class FrameworkPythonRequirement < Requirement
   fatal true
 
   satisfy do
     q = `python -c "import distutils.sysconfig as c; print(c.get_config_var('PYTHONFRAMEWORK'))"`
-    not q.chomp.empty?
+    !q.chomp.empty?
   end
 
   def message
@@ -14,24 +12,33 @@ class FrameworkPython < Requirement
 end
 
 class Wxpython < Formula
-  homepage "http://www.wxwidgets.org"
+  desc "Python bindings for wxWidgets"
+  homepage "https://www.wxwidgets.org/"
   url "https://downloads.sourceforge.net/project/wxpython/wxPython/3.0.2.0/wxPython-src-3.0.2.0.tar.bz2"
-  sha1 "5053f3fa04f4eb3a9d4bfd762d963deb7fa46866"
+  sha256 "d54129e5fbea4fb8091c87b2980760b72c22a386cb3b9dd2eebc928ef5e8df61"
 
   bottle do
-    sha1 "e73ade83e5802db3b824ebdc8b8fc62d0c70ae6f" => :yosemite
-    sha1 "739ab76d3bc7e0f804ea487d14274630ae0e19cc" => :mavericks
-    sha1 "76bd0e1a6ce0fba459b4847836c3dfd0ac4a31af" => :mountain_lion
+    sha256 "b6390fed49e3f8da554814bc1c08d13d0da44d6ef5efa22de30e43e9f7bc023a" => :yosemite
+    sha256 "b563163757eb060202d40004e96914ffe5d01070c74f7a47d186e2658e9713da" => :mavericks
+    sha256 "73db27fb5b2c795140722b3016384038bfa86cee895afb3c2343111061e104e5" => :mountain_lion
   end
 
   if MacOS.version <= :snow_leopard
     depends_on :python
-    depends_on FrameworkPython
+    depends_on FrameworkPythonRequirement
   end
   depends_on "wxmac"
 
+  option :universal
+
   def install
     ENV["WXWIN"] = buildpath
+
+    if build.universal?
+      ENV.universal_binary
+    else
+      ENV.append_to_cflags "-arch #{MacOS.preferred_arch}"
+    end
 
     args = [
       "WXPORT=osx_cocoa",
@@ -49,16 +56,7 @@ class Wxpython < Formula
     ]
 
     cd "wxPython" do
-      ENV.append_to_cflags "-arch #{MacOS.preferred_arch}"
-
-      system "python", "setup.py",
-                     "build_ext",
-                     *args
-
-      system "python", "setup.py",
-                     "install",
-                     "--prefix=#{prefix}",
-                     *args
+      system "python", "setup.py", "install", "--prefix=#{prefix}", *args
     end
   end
 end

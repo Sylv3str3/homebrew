@@ -1,20 +1,24 @@
-require "formula"
-
 class Wxmac < Formula
-  homepage "http://www.wxwidgets.org"
+  desc "wxWidgets, a cross-platform C++ GUI toolkit (for OS X)"
+  homepage "https://www.wxwidgets.org"
   url "https://downloads.sourceforge.net/project/wxwindows/3.0.2/wxWidgets-3.0.2.tar.bz2"
-  sha1 "6461eab4428c0a8b9e41781b8787510484dea800"
+  sha256 "346879dc554f3ab8d6da2704f651ecb504a22e9d31c17ef5449b129ed711585d"
 
   bottle do
-    revision 9
-    sha1 "7a63c6715dea44ef7eee683355458e9203fb723a" => :yosemite
-    sha1 "5e6e114cff5901ec6f7586a844df713dc376fcf7" => :mavericks
-    sha1 "2f7ab6db7de665c76abe4546672e58cd48973c13" => :mountain_lion
+    cellar :any
+    revision 11
+    sha256 "9272643575b7db469f6cb54c61fa36a9339dd07748f3dfe7b7784994c9ce1008" => :el_capitan
+    sha256 "d95d1244a39a12ca000d076d2e7dfaed6b42f1ad1540078cafabb5411f9d859f" => :yosemite
+    sha256 "c9e8baf55daea9974015e61efc0719c1b4fb78a92e158b08c351d5aeb24f15b1" => :mavericks
+    sha256 "59eb370bb7368a155ad3d6b7dba8536160d9d1ee6ebc67d240eb014f4a6d2dda" => :mountain_lion
   end
 
   depends_on "jpeg"
   depends_on "libpng"
   depends_on "libtiff"
+
+  option "with-stl", "use standard C++ classes for everything"
+  option "with-static", "build static libraries"
 
   # Various fixes related to Yosemite. Revisit in next stable release.
   # Please keep an eye on http://trac.wxwidgets.org/ticket/16329 as well
@@ -34,7 +38,6 @@ class Wxmac < Formula
     args = [
       "--disable-debug",
       "--prefix=#{prefix}",
-      "--enable-shared",
       "--enable-unicode",
       "--enable-std_string",
       "--enable-display",
@@ -61,14 +64,26 @@ class Wxmac < Formula
       "--enable-dataviewctrl",
       "--with-expat",
       "--with-macosx-version-min=#{MacOS.version}",
-      "--enable-universal_binary=#{Hardware::CPU.universal_archs.join(',')}",
+      "--enable-universal_binary=#{Hardware::CPU.universal_archs.join(",")}",
       "--disable-precomp-headers",
       # This is the default option, but be explicit
       "--disable-monolithic"
     ]
 
+    args << "--enable-stl" if build.with? "stl"
+
+    if build.with? "static"
+      args << "--disable-shared"
+    else
+      args << "--enable-shared"
+    end
+
     system "./configure", *args
     system "make", "install"
+  end
+
+  test do
+    system "wx-config", "--libs"
   end
 end
 

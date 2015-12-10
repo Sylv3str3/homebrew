@@ -1,12 +1,15 @@
 class Clamav < Formula
+  desc "Anti-virus software"
   homepage "http://www.clamav.net/"
-  url "https://downloads.sourceforge.net/clamav/clamav-0.98.6.tar.gz"
-  sha1 "03cb9a20a08aba9176b1f58d5527d06ec8261f9c"
+  url "https://downloads.sourceforge.net/clamav/clamav-0.98.7.tar.gz"
+  sha256 "282417b707740de13cd8f18d4cbca9ddd181cf96b444db2cad98913a5153e272"
+  revision 1
 
   bottle do
-    sha1 "b98d88af709fc48b4cad3e07e8bf2b243a64e36b" => :yosemite
-    sha1 "857c84af44eeeb1f8413f5034ff47be8f950075d" => :mavericks
-    sha1 "e0b8f89118ff2c0fe2d8bca37572f4b37d327ce6" => :mountain_lion
+    revision 1
+    sha256 "3cb914d89c96effdf0439551f1dd150144cfaab5f18e22a104da97aba36f8ece" => :el_capitan
+    sha256 "547d8ef72bee7b5c28a1da1b06b93a7720405fe5a5804bbff2b8f5e80a8df0af" => :yosemite
+    sha256 "e7797dd35b4e5a10eda9e183741cb8f7ace847ddc9179de098dad71b0c952e58" => :mavericks
   end
 
   head do
@@ -32,6 +35,7 @@ class Clamav < Formula
       "--disable-zlib-vcheck",
       "--with-zlib=#{MacOS.sdk_path}/usr",
       "--with-openssl=#{Formula["openssl"].opt_prefix}",
+      "--enable-llvm=no",
     ]
 
     args << "--with-libjson=#{Formula["json-c"].opt_prefix}" if build.with? "json-c"

@@ -1,14 +1,14 @@
-require "formula"
-
 class Ruby < Formula
+  desc "Powerful, clean, object-oriented scripting language"
   homepage "https://www.ruby-lang.org/"
-  url "http://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.0.tar.bz2"
-  sha256 "1c031137999f832f86be366a71155113675b72420830ce432b777a0ff4942955"
+  url "https://cache.ruby-lang.org/pub/ruby/2.2/ruby-2.2.3.tar.bz2"
+  sha256 "c745cb98b29127d7f19f1bf9e0a63c384736f4d303b83c4f4bda3c2ee3c5e41f"
 
   bottle do
-    sha1 "8591ec9c138a4850a030f78d5ae3e4facc2ad6ba" => :yosemite
-    sha1 "6ac700f32dab5b284bc765c61177fc17e72c425a" => :mavericks
-    sha1 "c1d79e729e6e899b2237f384c9cb1a38e749d2b2" => :mountain_lion
+    revision 1
+    sha256 "a1360891dc5f037f5f28d54a0f4314b601a12f79abd49972216419d186142b70" => :el_capitan
+    sha256 "ad503cac645b112e2d50327b50608d5833aca8d0cdded52d82c21ccecc2ba399" => :yosemite
+    sha256 "ebdca4210ea52abd85ec1102f223ef2f537ae20249da305f720144b4424e9b93" => :mavericks
   end
 
   head do
@@ -59,24 +59,47 @@ class Ruby < Formula
 
     paths = [
       Formula["libyaml"].opt_prefix,
-      Formula["openssl"].opt_prefix
+      Formula["openssl"].opt_prefix,
     ]
 
-    %w[readline gdbm gmp libffi].each { |dep|
+    %w[readline gdbm gmp libffi].each do |dep|
       paths << Formula[dep].opt_prefix if build.with? dep
-    }
+    end
 
     args << "--with-opt-dir=#{paths.join(":")}"
 
     system "./configure", *args
+
+    # Ruby has been configured to look in the HOMEBREW_PREFIX for the
+    # sitedir and vendordir directories; however we don't actually want to create
+    # them during the install.
+    #
+    # These directories are empty on install; sitedir is used for non-rubygems
+    # third party libraries, and vendordir is used for packager-provided libraries.
+    inreplace "tool/rbinstall.rb" do |s|
+      s.gsub! 'prepare "extension scripts", sitelibdir', ""
+      s.gsub! 'prepare "extension scripts", vendorlibdir', ""
+      s.gsub! 'prepare "extension objects", sitearchlibdir', ""
+      s.gsub! 'prepare "extension objects", vendorarchlibdir', ""
+    end
+
     system "make"
     system "make", "install"
+
+    # A newer version of ruby-mode.el is shipped with Emacs
+    elisp.install Dir["misc/*.el"].reject { |f| f == "misc/ruby-mode.el" }
   end
 
   def post_install
     # Customize rubygems to look/install in the global gem directory
     # instead of in the Cellar, making gems last across reinstalls
-    (lib/"ruby/#{abi_version}/rubygems/defaults/operating_system.rb").write rubygems_config
+    config_file = lib/"ruby/#{abi_version}/rubygems/defaults/operating_system.rb"
+    config_file.unlink if config_file.exist?
+    config_file.write rubygems_config
+
+    # Create the sitedir and vendordir that were skipped during install
+    mkdir_p `#{bin}/ruby -e 'require "rbconfig"; print RbConfig::CONFIG["sitearchdir"]'`
+    mkdir_p `#{bin}/ruby -e 'require "rbconfig"; print RbConfig::CONFIG["vendorarchdir"]'`
   end
 
   def abi_version

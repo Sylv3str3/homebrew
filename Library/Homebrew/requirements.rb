@@ -1,17 +1,20 @@
-require 'requirement'
-require 'requirements/apr_dependency'
-require 'requirements/fortran_dependency'
-require 'requirements/language_module_dependency'
-require 'requirements/minimum_macos_requirement'
-require 'requirements/maximum_macos_requirement'
-require 'requirements/mpi_dependency'
-require 'requirements/osxfuse_dependency'
-require 'requirements/python_dependency'
-require 'requirements/tuntap_dependency'
-require 'requirements/unsigned_kext_requirement'
-require 'requirements/x11_dependency'
+require "requirement"
+require "requirements/apr_requirement"
+require "requirements/fortran_requirement"
+require "requirements/language_module_requirement"
+require "requirements/minimum_macos_requirement"
+require "requirements/maximum_macos_requirement"
+require "requirements/mpi_requirement"
+require "requirements/osxfuse_requirement"
+require "requirements/python_requirement"
+require "requirements/java_requirement"
+require "requirements/ruby_requirement"
+require "requirements/tuntap_requirement"
+require "requirements/unsigned_kext_requirement"
+require "requirements/x11_requirement"
+require "requirements/emacs_requirement"
 
-class XcodeDependency < Requirement
+class XcodeRequirement < Requirement
   fatal true
 
   satisfy(:build_env => false) { xcode_installed_version }
@@ -39,7 +42,7 @@ class XcodeDependency < Requirement
       EOS
     else
       message += <<-EOS.undent
-        Xcode can be installed from https://developer.apple.com/downloads/
+        Xcode can be installed from https://developer.apple.com/xcode/downloads/
       EOS
     end
   end
@@ -49,33 +52,33 @@ class XcodeDependency < Requirement
   end
 end
 
-class MysqlDependency < Requirement
+class MysqlRequirement < Requirement
   fatal true
-  default_formula 'mysql'
+  default_formula "mysql"
 
-  satisfy { which 'mysql_config' }
+  satisfy { which "mysql_config" }
 end
 
-class PostgresqlDependency < Requirement
+class PostgresqlRequirement < Requirement
   fatal true
-  default_formula 'postgresql'
+  default_formula "postgresql"
 
-  satisfy { which 'pg_config' }
+  satisfy { which "pg_config" }
 end
 
-class GPGDependency < Requirement
+class GPGRequirement < Requirement
   fatal true
   default_formula "gpg"
 
   satisfy { which("gpg") || which("gpg2") }
 end
 
-class TeXDependency < Requirement
+class TeXRequirement < Requirement
   fatal true
   cask "mactex"
   download "https://www.tug.org/mactex/"
 
-  satisfy { which('tex') || which('latex') }
+  satisfy { which("tex") || which("latex") }
 
   def message
     s = <<-EOS.undent
@@ -97,7 +100,7 @@ class ArchRequirement < Requirement
     super
   end
 
-  satisfy do
+  satisfy(:build_env => false) do
     case @arch
     when :x86_64 then MacOS.prefer_64_bit?
     when :intel, :ppc then Hardware::CPU.type == @arch
@@ -109,59 +112,16 @@ class ArchRequirement < Requirement
   end
 end
 
-class MercurialDependency < Requirement
+class MercurialRequirement < Requirement
   fatal true
-  default_formula 'mercurial'
+  default_formula "mercurial"
 
-  satisfy { which('hg') }
+  satisfy { which("hg") }
 end
 
-class GitDependency < Requirement
+class GitRequirement < Requirement
   fatal true
-  default_formula 'git'
-  satisfy { !!which('git') }
+  default_formula "git"
+  satisfy { Utils.git_available? }
 end
 
-class JavaDependency < Requirement
-  fatal true
-  cask "java"
-  download "http://www.oracle.com/technetwork/java/javase/downloads/index.html"
-
-  satisfy { java_version }
-
-  env do
-    java_home = Pathname.new(@java_home)
-    ENV["JAVA_HOME"] = java_home
-    ENV.prepend_path "PATH", java_home/"bin"
-    if (java_home/"include").exist? # Oracle JVM
-      ENV.append_to_cflags "-I#{java_home}/include"
-      ENV.append_to_cflags "-I#{java_home}/include/darwin"
-    else # Apple JVM
-      ENV.append_to_cflags "-I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers/"
-    end
-  end
-
-  def initialize(tags)
-    @version = tags.shift if /(\d\.)+\d/ === tags.first
-    super
-  end
-
-  def java_version
-    args = %w[--failfast]
-    args << "--version" << "#{@version}" if @version
-    @java_home = Utils.popen_read("/usr/libexec/java_home", *args).chomp
-    $?.success?
-  end
-
-  def message
-    version_string = " #{@version}" if @version
-
-    s = "Java#{version_string} is required to install this formula."
-    s += super
-    s
-  end
-
-  def inspect
-    "#<#{self.class.name}: #{name.inspect} #{tags.inspect} version=#{@version.inspect}>"
-  end
-end

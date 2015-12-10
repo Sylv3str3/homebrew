@@ -1,30 +1,25 @@
-require "formula"
-
 class Collectd < Formula
+  desc "Statistics collection and monitoring daemon"
   homepage "https://collectd.org/"
 
   stable do
-    url "https://collectd.org/files/collectd-5.4.1.tar.gz"
-    mirror "https://mirrors.kernel.org/debian/pool/main/c/collectd/collectd_5.4.1.orig.tar.gz"
-    sha256 "853680936893df00bfc2be58f61ab9181fecb1cf45fc5cddcb7d25da98855f65"
+    url "https://collectd.org/files/collectd-5.5.0.tar.bz2"
+    mirror "http://pkgs.fedoraproject.org/repo/pkgs/collectd/collectd-5.5.0.tar.bz2/c39305ef5514b44238b0d31f77e29e6a/collectd-5.5.0.tar.bz2"
+    sha256 "847684cf5c10de1dc34145078af3fcf6e0d168ba98c14f1343b1062a4b569e88"
 
-    # Fix detection of htonll()
-    # https://github.com/collectd/collectd/commit/1a822486f40
     patch do
-      url "https://gist.githubusercontent.com/jacknagel/85ba734488b6fbd25957/raw/7f16be18f96f1202ec7e5b193afa46061dfd944e/collectd.diff"
-      sha1 "34afbe6b9193f72ac6f2dd9a6978ff75ef9f41b0"
+      url "https://github.com/collectd/collectd/commit/e0683047a42e217c352c2419532b8e029f9f3f0a.diff"
+      sha256 "7053170a072d27465b69eed269d32190ec810bcb0db59f139a1682e71a326fdd"
     end
   end
 
   bottle do
-    sha1 "a5476eb04711bb016a4ef65412a70ba3722098e2" => :mavericks
-    sha1 "4829ba6a324a3057ce56a56d378a7e6790530feb" => :mountain_lion
-    sha1 "c0c82da5f79fb4c19cf7d2f16a9c008810b835c7" => :lion
+    revision 1
+    sha256 "d07cd68645ca83f86ac0b06526a869a89d899fdd1d7211a9884f85e8d682e27a" => :el_capitan
+    sha256 "9e6e01ec3af8ddda0b52756fc1516b4e9dcb68464e3fea414ab3e394f43d926b" => :yosemite
+    sha256 "f964c5b63bc491b136899357923858b066069291e1210a649fa143fa8ba29145" => :mavericks
+    sha256 "62c64c1d76e9c2b37845391b5dd7ec5b534190b5172ac68ca483aa3ef8241c80" => :mountain_lion
   end
-
-  # Will fail against Java 1.7
-  option "java", "Enable Java 1.6 support"
-  option "debug", "Enable debug support"
 
   head do
     url "git://git.verplant.org/collectd.git"
@@ -34,7 +29,18 @@ class Collectd < Formula
     depends_on "autoconf" => :build
   end
 
+  # Will fail against Java 1.7
+  option "with-java", "Enable Java 1.6 support"
+  option "with-protobuf-c", "Enable write_riemann via protobuf-c support"
+  option "with-debug", "Enable debug support"
+
+  deprecated_option "java" => "with-java"
+  deprecated_option "debug" => "with-debug"
+
   depends_on "pkg-config" => :build
+  depends_on "protobuf-c" => :optional
+  depends_on :java => ["1.6", :optional]
+  depends_on "openssl"
 
   fails_with :clang do
     build 318
@@ -45,6 +51,10 @@ class Collectd < Formula
   end
 
   def install
+    # collectd breaks with makejobs
+    # see: https://github.com/collectd/collectd/issues/1146
+    ENV.deparallelize
+
     args = %W[
       --disable-debug
       --disable-dependency-tracking
@@ -53,8 +63,9 @@ class Collectd < Formula
     ]
 
     args << "--disable-embedded-perl" if MacOS.version <= :leopard
-    args << "--disable-java" unless build.include? "java"
-    args << "--enable-debug" if build.include? "debug"
+    args << "--disable-java" if build.without? "java"
+    args << "--enable-write_riemann" if build.with? "protobuf-c"
+    args << "--enable-debug" if build.with? "debug"
 
     system "./build.sh" if build.head?
     system "./configure", *args
@@ -80,11 +91,21 @@ class Collectd < Formula
         <key>RunAtLoad</key>
         <true/>
         <key>StandardErrorPath</key>
-        <string>/usr/local/var/log/collectd.log</string>
+        <string>#{var}/log/collectd.log</string>
         <key>StandardOutPath</key>
-        <string>/usr/local/var/log/collectd.log</string>
+        <string>#{var}/log/collectd.log</string>
       </dict>
     </plist>
     EOS
+  end
+
+  test do
+    begin
+      pid = fork { exec sbin/"collectd", "-f" }
+      assert shell_output("nc -u -w 2 127.0.0.1 25826", 0)
+    ensure
+      Process.kill("SIGINT", pid)
+      Process.wait(pid)
+    end
   end
 end

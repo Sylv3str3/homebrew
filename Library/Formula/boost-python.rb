@@ -1,40 +1,22 @@
-class UniversalPython < Requirement
-  satisfy(:build_env => false) { archs_for_command("python").universal? }
-
-  def message; <<-EOS.undent
-    A universal build was requested, but Python is not a universal build
-
-    Boost compiles against the Python it finds in the path; if this Python
-    is not a universal build then linking will likely fail.
-    EOS
-  end
-end
-
-class UniversalPython3 < Requirement
-  satisfy(:build_env => false) { archs_for_command("python3").universal? }
-
-  def message; <<-EOS.undent
-    A universal build was requested, but Python 3 is not a universal build
-
-    Boost compiles against the Python 3 it finds in the path; if this Python
-    is not a universal build then linking will likely fail.
-    EOS
-  end
-end
-
 class BoostPython < Formula
+  desc "C++ library for C++/Python interoperability"
   homepage "http://www.boost.org"
-  url "https://downloads.sourceforge.net/project/boost/boost/1.57.0/boost_1_57_0.tar.bz2"
-  sha1 "e151557ae47afd1b43dc3fac46f8b04a8fe51c12"
+  url "https://downloads.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.bz2"
+  sha256 "727a932322d94287b62abb1bd2d41723eec4356a7728909e38adb65ca25241ca"
   head "https://github.com/boostorg/boost.git"
+
+  bottle do
+    cellar :any
+    sha256 "0fb4d1d29f5c8631cfbba2fdfa9a9d6bc35ade9523af9bef6d31270dd95963c9" => :el_capitan
+    sha256 "42f052877490d79eb5e9b97332f6707a195f4ad74de74e6b403384e882015955" => :yosemite
+    sha256 "0aa4f4f96ec466b37c0d2dec54fa3acfe825a840f36bce3fd3d853ab6a41682f" => :mavericks
+  end
 
   option :universal
   option :cxx11
 
-  depends_on :python => :recommended
+  option "without-python", "Build without python 2 support"
   depends_on :python3 => :optional
-  depends_on UniversalPython if build.universal? and build.with? "python"
-  depends_on UniversalPython3 if build.universal? and build.with? "python3"
 
   if build.cxx11?
     depends_on "boost" => "c++11"
@@ -49,6 +31,14 @@ class BoostPython < Formula
 
   def install
     ENV.universal_binary if build.universal?
+
+    if stable?
+      # fix make_setter regression
+      # https://github.com/boostorg/python/pull/40
+      inreplace "boost/python/data_members.hpp",
+                "# if BOOST_WORKAROUND(__EDG_VERSION__, <= 238)",
+                "# if !BOOST_WORKAROUND(__EDG_VERSION__, <= 238)"
+    end
 
     # "layout" should be synchronized with boost
     args = ["--prefix=#{prefix}",
@@ -114,12 +104,12 @@ class BoostPython < Formula
         boost::python::def("greet", greet);
       }
     EOS
-    Language::Python.each_python(build) do |python, version|
-      pycflags = `#{python}-config --includes`.strip
-      pyldflags = `#{python}-config --ldflags`.strip
-      system "#{ENV.cxx} -shared hello.cpp #{pycflags} #{pyldflags} -lboost_#{python} -o hello.so"
+    Language::Python.each_python(build) do |python, _|
+      pyflags = (`#{python}-config --includes`.strip +
+                 `#{python}-config --ldflags`.strip).split(" ")
+      system ENV.cxx, "-shared", "hello.cpp", "-lboost_#{python}", "-o", "hello.so", *pyflags
       output = `#{python} -c "from __future__ import print_function; import hello; print(hello.greet())"`
-      assert output.include?("Hello, world!")
+      assert_match "Hello, world!", output
     end
   end
 end

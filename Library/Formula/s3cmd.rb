@@ -1,27 +1,27 @@
 class S3cmd < Formula
-  homepage 'http://s3tools.org/s3cmd'
-  url 'https://downloads.sourceforge.net/project/s3tools/s3cmd/1.5.0/s3cmd-1.5.0.tar.gz'
-  sha1 '53ebc485329cb15cad8f61ca0c8c2d06563ee2f3'
-  head 'https://github.com/s3tools/s3cmd.git'
+  desc "Command-line tool for the Amazon S3 service"
+  homepage "http://s3tools.org/s3cmd"
+  url "https://downloads.sourceforge.net/project/s3tools/s3cmd/1.6.0/s3cmd-1.6.0.tar.gz"
+  sha256 "04279ee26c661d4b740449460ed93a74ffec91616f685474beea97e930fdfa5c"
+  head "https://github.com/s3tools/s3cmd.git"
 
   depends_on :python if MacOS.version <= :snow_leopard
 
   bottle do
-    cellar :any
-    revision 2
-    sha1 "5923f4a71ccc26ac8e4d603f667ea32cdddfe1ae" => :yosemite
-    sha1 "0a6f4d5b585d618189ea7dd2f417583c818c75e9" => :mavericks
-    sha1 "473b664c50c6673c4b14b92084780d350da36c51" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "58fa4ec60a22a4fd19d4010338b59c73d42c6955e93db7bd92a708d2f561c296" => :el_capitan
+    sha256 "0e3c657e20a641b22a820df361b72f29b7e5a17679b0d3c92330a567997f5872" => :yosemite
+    sha256 "6520b7dd32b5cf7b48ac054d65706b4be6359e562dee84eb0337c2cc2780a24d" => :mavericks
   end
 
   resource "six" do
     url "https://pypi.python.org/packages/source/s/six/six-1.9.0.tar.gz"
-    sha1 "d168e6d01f0900875c6ecebc97da72d0fda31129"
+    sha256 "e24052411fc4fbd1f672635537c3fc2330d9481b18c0317695b46259512c91d5"
   end
 
   resource "python-dateutil" do
     url "https://pypi.python.org/packages/source/p/python-dateutil/python-dateutil-2.4.0.tar.gz"
-    sha1 "159081a4c5b3602ab440a7db305f987c00ee8c6d"
+    sha256 "439df33ce47ef1478a4f4765f3390eab0ed3ec4ae10be32f2930000c8d19f417"
   end
 
   def install

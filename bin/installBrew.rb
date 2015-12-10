@@ -167,7 +167,7 @@ Dir.chdir HOMEBREW_PREFIX do
   if git
     # we do it in four steps to avoid merge errors when reinstalling
     system git, "init", "-q"
-    system git, "remote", "add", "origin", "https://github.com/Sylv3str3/homebrew-1"
+    system git, "remote", "add", "origin", "https://github.com/pampata/homebrew"
 
     args = git, "fetch", "origin", "master:refs/remotes/origin/master", "-n"
     args << "--depth=1" if ARGV.include? "--fast"
@@ -180,7 +180,7 @@ Dir.chdir HOMEBREW_PREFIX do
     # we use -k for curl because Leopard has a bunch of bad SSL certificates
     curl_flags = "fsSL"
     curl_flags << "k" if macos_version <= "10.5"
-    system "/bin/bash -o pipefail -c '/usr/bin/curl -#{curl_flags} https://github.com/Sylv3str3/homebrew-1/tarball/master | /usr/bin/tar xz -m --strip 1'"
+    system "/bin/bash -o pipefail -c '/usr/bin/curl -#{curl_flags} https://github.com/pampata/homebrew/tarball/master | /usr/bin/tar xz -m --strip 1'"
   end
 end
 

@@ -1,15 +1,24 @@
-require "formula"
-
 class Ntopng < Formula
+  desc "Next generation version of the original ntop"
   homepage "http://www.ntop.org/products/ntop/"
-  url "https://downloads.sourceforge.net/project/ntop/ntopng/ntopng-1.2.1.tgz"
-  sha1 "e90a8cc045fb4d65d57d029908a9b029d801490c"
+  url "https://downloads.sourceforge.net/project/ntop/ntopng/ntopng-2.2.tar.gz"
+  sha256 "4fccfc9e9f333addcd3c957b4520c471117bc2df5655d6eabf328c7385fb255e"
 
   bottle do
-    sha1 "9746b5fe9c4635a927ea494707ae7848b0183d2e" => :mavericks
-    sha1 "521a62da3a4d1168bf5212297b9aeb7b597b69a4" => :mountain_lion
-    sha1 "a7ff0f827998936719f6c4e04060f73939f7bc48" => :lion
+    sha256 "e980bd3474e6ed3cf845e75e6ad5f7eabe9b30ed97ad3f3ddd0415a76b19f855" => :el_capitan
+    sha256 "7c99927ee3e313844d2f615bcf4632390a2328cb761384ae09410d14fe241edc" => :yosemite
+    sha256 "e6034a1029f47b440f7dd39c1ec41ab4b9e20cb5babae518456f3d1420d219e7" => :mavericks
   end
+
+  head do
+    url "https://github.com/ntop/ntopng.git", :branch => "dev"
+
+    resource "nDPI" do
+      url "https://github.com/ntop/nDPI.git", :branch => "dev"
+    end
+  end
+
+  option "with-mariadb", "Build with mariadb support"
 
   depends_on "autoconf" => :build
   depends_on "automake" => :build
@@ -25,10 +34,19 @@ class Ntopng < Formula
   depends_on "luajit"
   depends_on "geoip"
   depends_on "redis"
+  depends_on "mysql" if build.without? "mariadb"
+  depends_on "mariadb" => :optional
 
   def install
+    if build.head?
+      resource("nDPI").stage do
+        system "./autogen.sh"
+        system "make"
+        (buildpath/"nDPI").install Dir["*"]
+      end
+    end
     system "./autogen.sh"
-    system "./configure","--prefix=#{prefix}"
+    system "./configure", "--prefix=#{prefix}"
     system "make"
     system "make", "install"
   end

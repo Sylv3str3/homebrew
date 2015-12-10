@@ -1,14 +1,20 @@
-require 'formula'
-
 class OpenMpi < Formula
-  homepage 'http://www.open-mpi.org/'
-  url 'http://www.open-mpi.org/software/ompi/v1.8/downloads/openmpi-1.8.4.tar.bz2'
-  sha1 '88ae39850fcf0db05ac20e35dd9e4cacc75bde4d'
+  desc "High performance message passing library"
+  homepage "https://www.open-mpi.org/"
+  url "https://www.open-mpi.org/software/ompi/v1.10/downloads/openmpi-1.10.1.tar.bz2"
+  sha256 "7919ecde15962bab2e26d01d5f5f4ead6696bbcacb504b8560f2e3a152bfe492"
 
   bottle do
-    sha1 "a6ec98d40ab34bf2eb4dbe9223d5aa430ba749ed" => :yosemite
-    sha1 "9d7366e69787c6b331fe5473c8025d86d8b79691" => :mavericks
-    sha1 "8c8627010c9390cb72054fba3f8eea419a67bb2b" => :mountain_lion
+    sha256 "257a75a3227ddc0b5e7c970a97c76cadeda417a259c54efbe25df955e0efe32b" => :el_capitan
+    sha256 "2c9afac3f1350e4693e2077fa3b5a6f149fc0b0cb19e804bba15cd8d00e62456" => :yosemite
+    sha256 "7c106ab43c8aa5fcde2d9961a084c4c34d5a8ea1888668d825ce1ec818519e29" => :mavericks
+  end
+
+  head do
+    url "https://github.com/open-mpi/ompi.git"
+    depends_on "automake" => :build
+    depends_on "autoconf" => :build
+    depends_on "libtool" => :build
   end
 
   deprecated_option "disable-fortran" => "without-fortran"
@@ -17,11 +23,12 @@ class OpenMpi < Formula
   option "with-mpi-thread-multiple", "Enable MPI_THREAD_MULTIPLE"
   option :cxx11
 
-  conflicts_with 'mpich2', :because => 'both install mpi__ compiler wrappers'
-  conflicts_with 'lcdf-typetools', :because => 'both install same set of binaries.'
+  conflicts_with "mpich", :because => "both install mpi__ compiler wrappers"
+  conflicts_with "lcdf-typetools", :because => "both install same set of binaries."
 
+  depends_on :java => :build
   depends_on :fortran => :recommended
-  depends_on 'libevent'
+  depends_on "libevent"
 
   def install
     ENV.cxx11 if build.cxx11?
@@ -32,22 +39,27 @@ class OpenMpi < Formula
       --disable-silent-rules
       --enable-ipv6
       --with-libevent=#{Formula["libevent"].opt_prefix}
+      --with-sge
     ]
+    args << "--with-platform-optimized" if build.head?
     args << "--disable-mpi-fortran" if build.without? "fortran"
     args << "--enable-mpi-thread-multiple" if build.with? "mpi-thread-multiple"
 
-    system './configure', *args
-    system 'make', 'all'
-    system 'make', 'check'
-    system 'make', 'install'
+    system "./autogen.pl" if build.head?
+    system "./configure", *args
+    system "make", "all"
+    system "make", "check"
+    system "make", "install"
 
     # If Fortran bindings were built, there will be stray `.mod` files
     # (Fortran header) in `lib` that need to be moved to `include`.
     include.install Dir["#{lib}/*.mod"]
 
-    # Move vtsetup.jar from bin to libexec.
-    libexec.install bin/'vtsetup.jar'
-    inreplace bin/'vtsetup', '$bindir/vtsetup.jar', '$prefix/libexec/vtsetup.jar'
+    if build.stable?
+      # Move vtsetup.jar from bin to libexec.
+      libexec.install bin/"vtsetup.jar"
+      inreplace bin/"vtsetup", "$bindir/vtsetup.jar", "$prefix/libexec/vtsetup.jar"
+    end
   end
 
   test do

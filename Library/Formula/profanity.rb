@@ -1,21 +1,22 @@
-require "formula"
-
 class Profanity < Formula
+  desc "Console based XMPP client"
   homepage "http://www.profanity.im/"
-  url "http://www.profanity.im/profanity-0.4.5.tar.gz"
-  sha1 "d9eb1b9d6a674d5f49e03882f80d1c5cf98c3ce1"
+  url "http://www.profanity.im/profanity-0.4.7.tar.gz"
+  sha256 "b02c4e029fe84941050ccab6c8cdf5f15df23de5d1384b4d1ec66da6faee11dd"
   head "https://github.com/boothj5/profanity.git"
 
   bottle do
-    sha1 "f53fc5631fa1b079414420275278e55d6225798d" => :yosemite
-    sha1 "240feb4c76b4ddb3170792710fa011cb90c302d4" => :mavericks
-    sha1 "2c5d854f76597d6b0aa55f4daad3aad3027f3bc4" => :mountain_lion
+    sha256 "70f475b74b55664d8110ed890211f5dc2adc0c9c0975a18c21da618160a3ee76" => :el_capitan
+    sha256 "31280fd909c4cfb6902dd2de6f91be7b0e186bcb28a437bd5f71f1a67bed8a75" => :yosemite
+    sha256 "332ab3be6943b2f1df0dbbb9c47363ab0acf07ba5d64c1c30afe70c07bf96a17" => :mavericks
   end
 
   depends_on "autoconf" => :build
   depends_on "automake" => :build
   depends_on "pkg-config" => :build
+  depends_on "ossp-uuid"
   depends_on "libstrophe"
+  depends_on "readline"
   depends_on "glib"
   depends_on "openssl"
   depends_on "gnutls"

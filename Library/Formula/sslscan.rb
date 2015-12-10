@@ -1,36 +1,26 @@
-require 'formula'
-
 class Sslscan < Formula
-  homepage 'https://www.titania-security.com/labs/sslscan'
-  url 'https://downloads.sourceforge.net/project/sslscan/sslscan/sslscan%201.8.0/sslscan-1.8.0.tgz'
-  sha1 'c867d766b38401ea0c0cde597497188e456e6d71'
+  desc "Test SSL/TLS enabled services to discover supported cipher suites."
+  homepage "https://github.com/rbsec/sslscan"
+  url "https://github.com/rbsec/sslscan/archive/1.11.0-rbsec.tar.gz"
+  version "1.11.0"
+  sha256 "698dbf01b9af29aaddf6bce466f568762d852f7b71936861191a3b18d9dda6a5"
+  head "https://github.com/rbsec/sslscan.git"
 
-  # Remove hardcoded gcc in Makefile
-  patch :DATA
+  bottle do
+    cellar :any
+    sha256 "5373126ffd3a5d26069dded06d4999d2fa4884a78b68c0b7b9cde0f7c9100639" => :el_capitan
+    sha256 "52d76e298a4bbd5db755626d4bf50f3ea5a4f2af09f7bfb6b6125d3790a70cc2" => :yosemite
+    sha256 "3a4dde232387d14e70cb5b3aeb670ccc96bbcc34cb685c0025c9eb087f2c79e4" => :mavericks
+  end
+
+  depends_on "openssl"
 
   def install
     system "make"
     bin.install "sslscan"
-    man1.install "sslscan.1"
   end
 
   test do
-    system "#{bin}/sslscan"
+    system "#{bin}/sslscan", "google.com"
   end
 end
-
-__END__
-diff --git a/Makefile b/Makefile
-index a3e1654..b1fbda8 100644
---- a/Makefile
-+++ b/Makefile
-@@ -3,7 +3,7 @@ BINPATH = /usr/bin/
- MANPATH = /usr/share/man/
- 
- all:
--	gcc -lssl -o sslscan $(SRCS) $(LDFLAGS) $(CFLAGS)
-+	$(CC) -lssl -lcrypto -o sslscan $(SRCS) $(LDFLAGS) $(CFLAGS)
- 
- install:
- 	cp sslscan $(BINPATH)
-

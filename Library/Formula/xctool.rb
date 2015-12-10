@@ -1,22 +1,21 @@
-require 'formula'
-
 class Xctool < Formula
-  homepage 'https://github.com/facebook/xctool'
-  url 'https://github.com/facebook/xctool/archive/v0.2.2.tar.gz'
-  sha1 '7c1f5610d0543a2a93b87aeebd7dfb642d91d50d'
-  head 'https://github.com/facebook/xctool.git'
+  desc "Drop-in replacement for xcodebuild with a few extra features"
+  homepage "https://github.com/facebook/xctool"
+  url "https://github.com/facebook/xctool/archive/0.2.7.tar.gz"
+  sha256 "afbc829f6b9b3f9d45755cd33a8b171def67dd9733977f70a0638d69f4a08730"
+  head "https://github.com/facebook/xctool.git"
 
   bottle do
     cellar :any
-    sha1 "71034d5372fa3cee7bde82febf2be7dd3d56ec45" => :yosemite
-    sha1 "5a842c2aac6d6e04ab8d51061fd7052011b6a6b8" => :mavericks
-    sha1 "384f13a1e0750e1c16cf112eb97c1f44bb724cd2" => :mountain_lion
+    sha256 "4096a879ff3553b5c07077c3d3797aae526ced093f8235377a8f0e3cd2645f8a" => :el_capitan
+    sha256 "5c2033c60a8a1c7fa364ff46e5a6e432207ee0323793ad851cef67b9379aa9c6" => :yosemite
+    sha256 "22af6fd008025eb106f775fe44d3ed3afa3e961ee3872c54f26849c2866bcf3b" => :mavericks
   end
 
-  depends_on :xcode => "5.0"
+  depends_on :xcode => "6.0"
 
   def install
-    system "./scripts/build.sh", "XT_INSTALL_ROOT=#{libexec}"
+    system "./scripts/build.sh", "XT_INSTALL_ROOT=#{libexec}", "-IDECustomDerivedDataLocation=#{buildpath}"
     bin.install_symlink "#{libexec}/bin/xctool"
   end
 

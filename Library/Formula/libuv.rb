@@ -1,36 +1,55 @@
 class Libuv < Formula
+  desc "Multi-platform support library with a focus on asynchronous I/O"
   homepage "https://github.com/libuv/libuv"
-  url "https://github.com/libuv/libuv/archive/v1.2.1.tar.gz"
-  sha1 "500421538aaa84aa6ab054205275f59968556654"
+  url "https://github.com/libuv/libuv/archive/v1.7.5.tar.gz"
+  sha256 "11d10f12d68fa655fff18c6021e8e45bc610e7baee006f17247b1830ee316093"
   head "https://github.com/libuv/libuv.git", :branch => "v1.x"
 
   bottle do
     cellar :any
-    sha1 "1c63490d4bd7a38e83187d117a1782ad0c3ad884" => :yosemite
-    sha1 "e3e0bd5e2351a0bd26e6975a8498c17e5f9d12bb" => :mavericks
-    sha1 "715d7fd7d6f7a408093a66d7005b4816f2c63929" => :mountain_lion
+    sha256 "3192e11c214e89a96d3c1f440ba5d9a1b347fcaaf5a03382a5d620fe721bd216" => :el_capitan
+    sha256 "3546c7c8bdfb99cffa13d89b32d34e7c0b722eb10e168fcc9444850f8119e2a8" => :yosemite
+    sha256 "90ed6423f092071cbd454797caf5992c6ea8e0db8f04707073702ea69039cb30" => :mavericks
   end
+
+  option "without-docs", "Don't build and install documentation"
+  option "with-test", "Execute compile time checks (Requires Internet connection)"
+  option :universal
+
+  deprecated_option "with-check" => "with-test"
 
   depends_on "pkg-config" => :build
   depends_on "automake" => :build
   depends_on "autoconf" => :build
   depends_on "libtool" => :build
-
-  option :universal
+  depends_on "sphinx-doc" => :build if build.with? "docs"
 
   def install
     ENV.universal_binary if build.universal?
+
+    if build.with? "docs"
+      # This isn't yet handled by the make install process sadly.
+      cd "docs" do
+        system "make", "man"
+        system "make", "singlehtml"
+        man1.install "build/man/libuv.1"
+        doc.install Dir["build/singlehtml/*"]
+      end
+    end
 
     system "./autogen.sh"
     system "./configure", "--disable-dependency-tracking",
                           "--disable-silent-rules",
                           "--prefix=#{prefix}"
+    system "make"
+    system "make", "check" if build.with? "test"
     system "make", "install"
   end
 
   test do
     (testpath/"test.c").write <<-EOS.undent
       #include <uv.h>
+      #include <stdlib.h>
 
       int main()
       {

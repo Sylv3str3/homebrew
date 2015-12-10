@@ -1,50 +1,63 @@
-# Note that x.even are stable releases, x.odd are devel releases
 class Node < Formula
+  desc "Platform built on the V8 JavaScript runtime to build network applications"
   homepage "https://nodejs.org/"
-  url "https://nodejs.org/dist/v0.12.0/node-v0.12.0.tar.gz"
-  sha256 "9700e23af4e9b3643af48cef5f2ad20a1331ff531a12154eef2bfb0bb1682e32"
-  head "https://github.com/joyent/node.git", :branch => "v0.12"
+  url "https://nodejs.org/dist/v5.1.1/node-v5.1.1.tar.gz"
+  sha256 "a779e024f800b5ec51f375fa1c14eda7254216daa36a1960cc1e4195b9fc22c3"
+  head "https://github.com/nodejs/node.git"
 
   bottle do
-    revision 1
-    sha1 "cf47b47fca78022a299f5353b968fb703fb90bc9" => :yosemite
-    sha1 "a0fc2c129428a0fcd50169857b240039d328463b" => :mavericks
-    sha1 "8312e7ea6ffec58e39ec7cc1f8671847a9d7b4bf" => :mountain_lion
+    sha256 "7a8f141c9727fd6fa13e01f9b3b0d9725ef656bf77c6c38a806c721d3b9441e9" => :el_capitan
+    sha256 "44a5c2514f83a4d5678f49b5484b48080fb183195e776877da8c67db4def5c01" => :yosemite
+    sha256 "a0a1f248bb820899514478c4964932bc06cb8d57a404c8e4ec10d0893b6afa75" => :mavericks
   end
 
   option "with-debug", "Build with debugger hooks"
   option "without-npm", "npm will not be installed"
   option "without-completion", "npm bash completion will not be installed"
+  option "with-full-icu", "Build with full-icu (all locales) instead of small-icu (English only)"
 
   deprecated_option "enable-debug" => "with-debug"
+  deprecated_option "with-icu4c" => "with-full-icu"
 
-  depends_on :python => :build
+  depends_on :python => :build if MacOS.version <= :snow_leopard
   depends_on "pkg-config" => :build
   depends_on "openssl" => :optional
 
-  # https://github.com/joyent/node/issues/7919
-  # https://github.com/Homebrew/homebrew/issues/36681
-  depends_on "icu4c" => :optional
-
-  fails_with :llvm do
-    build 2326
+  # Per upstream - "Need g++ 4.8 or clang++ 3.4".
+  fails_with :clang if MacOS.version <= :snow_leopard
+  fails_with :llvm
+  fails_with :gcc_4_0
+  fails_with :gcc
+  ("4.3".."4.7").each do |n|
+    fails_with :gcc => n
   end
 
+  # We track major/minor from upstream Node releases.
+  # We will accept *important* npm patch releases when necessary.
+  # https://github.com/Homebrew/homebrew/pull/46098#issuecomment-157802319
   resource "npm" do
-    url "https://registry.npmjs.org/npm/-/npm-2.5.1.tgz"
-    sha1 "23e4b0fdd1ffced7d835780e692a9e5a0125bb02"
+    url "https://registry.npmjs.org/npm/-/npm-3.3.12.tgz"
+    sha256 "09475d7096731d93c0aacd7dfe58794d67c52ee6562675aee6c1f734ddba8158"
+  end
+
+  resource "icu4c" do
+    url "https://ssl.icu-project.org/files/icu4c/56.1/icu4c-56_1-src.tgz"
+    mirror "https://ftp.mirrorservice.org/sites/download.qt-project.org/development_releases/prebuilt/icu/src/icu4c-56_1-src.tgz"
+    version "56.1"
+    sha256 "3a64e9105c734dcf631c0b3ed60404531bce6c0f5a64bfe1a6402a4cc2314816"
   end
 
   def install
     args = %W[--prefix=#{prefix} --without-npm]
     args << "--debug" if build.with? "debug"
-    args << "--with-intl=system-icu" if build.with? "icu4c"
-
-    if build.with? "openssl"
-      args << "--shared-openssl"
+    args << "--shared-openssl" if build.with? "openssl"
+    if build.with? "full-icu"
+      args << "--with-intl=full-icu"
     else
-      args << "--without-ssl2" << "--without-ssl3"
+      args << "--with-intl=small-icu"
     end
+
+    resource("icu4c").stage buildpath/"deps/icu"
 
     system "./configure", *args
     system "make", "install"
@@ -54,14 +67,16 @@ class Node < Formula
 
       # make sure npm can find node
       ENV.prepend_path "PATH", bin
-      # make sure user prefix settings in $HOME are ignored
-      ENV["HOME"] = buildpath/"home"
       # set log level temporarily for npm's `make install`
       ENV["NPM_CONFIG_LOGLEVEL"] = "verbose"
 
       cd buildpath/"npm_install" do
         system "./configure", "--prefix=#{libexec}/npm"
         system "make", "install"
+        # `package.json` has relative paths to the npm_install directory.
+        # This copies back over the vanilla `package.json` that is expected.
+        # https://github.com/Homebrew/homebrew/issues/46131#issuecomment-157845008
+        cp buildpath/"npm_install/package.json", libexec/"npm/lib/node_modules/npm"
       end
 
       if build.with? "completion"
@@ -94,7 +109,7 @@ class Node < Formula
       # Dirs must exist first: https://github.com/Homebrew/homebrew/issues/35969
       mkdir_p HOMEBREW_PREFIX/"share/man/#{man}"
       rm_f Dir[HOMEBREW_PREFIX/"share/man/#{man}/{npm.,npm-,npmrc.}*"]
-      ln_sf Dir[libexec/"npm/share/man/#{man}/npm*"], HOMEBREW_PREFIX/"share/man/#{man}"
+      ln_sf Dir[libexec/"npm/lib/node_modules/npm/man/#{man}/npm*"], HOMEBREW_PREFIX/"share/man/#{man}"
     end
 
     npm_root = node_modules/"npm"
@@ -105,13 +120,7 @@ class Node < Formula
   def caveats
     s = ""
 
-    if build.with? "npm"
-      s += <<-EOS.undent
-        If you update npm itself, do NOT use the npm update command.
-        The upstream-recommended way to update npm is:
-          npm install -g npm@latest
-      EOS
-    else
+    if build.without? "npm"
       s += <<-EOS.undent
         Homebrew has NOT installed npm. If you later install it, you should supplement
         your NODE_PATH with the npm module folder:
@@ -119,15 +128,11 @@ class Node < Formula
       EOS
     end
 
-    if build.with? "icu4c"
+    if build.without? "full-icu"
       s += <<-EOS.undent
-
-        Please note `icu4c` is built with a newer deployment target than Node and
-        this may cause issues in certain usage. Node itself is built against the
-        outdated `libstdc++` target, which is the root cause. For more information see:
-          https://github.com/joyent/node/issues/7919
-
-        If this is an issue for you, do `brew install node --without-icu4c`.
+        Please note by default only English locale support is provided. If you need
+        full locale support you should:
+          `brew reinstall node --with-full-icu`
       EOS
     end
 
@@ -138,9 +143,10 @@ class Node < Formula
     path = testpath/"test.js"
     path.write "console.log('hello');"
 
-    output = `#{bin}/node #{path}`.strip
+    output = shell_output("#{bin}/node #{path}").strip
     assert_equal "hello", output
-    assert_equal 0, $?.exitstatus
+    output = shell_output("#{bin}/node -e 'console.log(new Intl.NumberFormat().format(1234.56))'").strip
+    assert_equal "1,234.56", output
 
     if build.with? "npm"
       # make sure npm can find node
@@ -149,6 +155,7 @@ class Node < Formula
       assert (HOMEBREW_PREFIX/"bin/npm").exist?, "npm must exist"
       assert (HOMEBREW_PREFIX/"bin/npm").executable?, "npm must be executable"
       system "#{HOMEBREW_PREFIX}/bin/npm", "--verbose", "install", "npm@latest"
+      system "#{HOMEBREW_PREFIX}/bin/npm", "--verbose", "install", "bignum"
     end
   end
 end

@@ -1,13 +1,15 @@
 class Subversion < Formula
+  desc "Version control system designed to be a better CVS"
   homepage "https://subversion.apache.org/"
-  url "http://www.apache.org/dyn/closer.cgi?path=subversion/subversion-1.8.11.tar.bz2"
-  mirror "http://archive.apache.org/dist/subversion/subversion-1.8.11.tar.bz2"
-  sha1 "161edaee328f4fdcfd2a7c10ecd3fbcd51c61275"
+  url "https://www.apache.org/dyn/closer.cgi?path=subversion/subversion-1.9.2.tar.bz2"
+  mirror "https://archive.apache.org/dist/subversion/subversion-1.9.2.tar.bz2"
+  sha256 "023da881139b4514647b6f8a830a244071034efcaad8c8e98c6b92393122b4eb"
 
   bottle do
-    sha1 "fdc774e0ca4c603e7d6167b0780fe6fb38ddd3f7" => :yosemite
-    sha1 "0ed6964b8bde9170b25e54c9e3cd56067325b00b" => :mavericks
-    sha1 "f27aeb2bc0aac84caea6ed9c9adb6401fd62143e" => :mountain_lion
+    revision 1
+    sha256 "231ddc0930b2e46d35778fd25b7521440afdd572325dd6741fb3eb8283905823" => :el_capitan
+    sha256 "14185bb5f0def4260da5bfa3b410ca690bb6cf2c069585e850d5fb1532457bde" => :yosemite
+    sha256 "744d0fd60fcd718589a04880897c0e56c256f3de53a8f884790d673700313254" => :mavericks
   end
 
   deprecated_option "java" => "with-java"
@@ -22,7 +24,7 @@ class Subversion < Formula
 
   resource "serf" do
     url "https://serf.googlecode.com/svn/src_releases/serf-1.3.8.tar.bz2", :using => :curl
-    sha1 "1d45425ca324336ce2f4ae7d7b4cfbc5567c5446"
+    sha256 "e0500be065dbbce490449837bb2ab624e46d64fc0b090474d9acaa87c82b2590"
   end
 
   depends_on "pkg-config" => :build
@@ -33,7 +35,7 @@ class Subversion < Formula
   depends_on :python => :optional
 
   # Bindings require swig
-  depends_on "swig" if build.with? "perl" or build.with? "python" or build.with? "ruby"
+  depends_on "swig" if build.with?("perl") || build.with?("python") || build.with?("ruby")
 
   # For Serf
   depends_on "scons" => :build
@@ -41,12 +43,14 @@ class Subversion < Formula
 
   # Other optional dependencies
   depends_on "gpg-agent" => :optional
+  depends_on :java => :optional
 
   # Fix #23993 by stripping flags swig can't handle from SWIG_CPPFLAGS
   # Prevent "-arch ppc" from being pulled in from Perl's $Config{ccflags}
+  # Prevent linking into a Python Framework
   patch :DATA
 
-  if build.with? "perl" or build.with? "ruby"
+  if build.with?("perl") || build.with?("ruby")
     # If building bindings, allow non-system interpreters
     # Currently the serf -> scons dependency forces stdenv, so this isn't
     # strictly necessary
@@ -72,6 +76,11 @@ class Subversion < Formula
       inreplace "SConstruct", "unique=1", "unique=0"
 
       ENV.universal_binary if build.universal?
+
+      # Fix perl bindings Makefile.pl failing with:
+      # Only one of PREFIX or INSTALL_BASE can be given.  Not both.
+      ENV.delete "PERL_MM_OPT"
+
       # scons ignores our compiler and flags unless explicitly passed
       args = %W[PREFIX=#{serf_prefix} GSSAPI=/usr CC=#{ENV.cc}
                 CFLAGS=#{ENV.cflags} LINKFLAGS=#{ENV.ldflags}
@@ -110,10 +119,6 @@ class Subversion < Formula
           `brew install subversion --universal --java`
         EOS
       end
-
-      if ENV["JAVA_HOME"]
-        opoo "JAVA_HOME is set. Try unsetting it if JNI headers cannot be found."
-      end
     end
 
     ENV.universal_binary if build.universal?
@@ -134,19 +139,26 @@ class Subversion < Formula
     args << "--enable-javahl" << "--without-jikes" if build.with? "java"
     args << "--without-gpg-agent" if build.without? "gpg-agent"
 
-    unless MacOS::CLT.installed?
+    if MacOS::CLT.installed?
+      args << "--with-apr=/usr"
+      args << "--with-apr-util=/usr"
+    else
       args << "--with-apr=#{Formula["apr"].opt_prefix}"
       args << "--with-apr-util=#{Formula["apr-util"].opt_prefix}"
       args << "--with-apxs=no"
-    else
-      args << "--with-apr=/usr"
-      args << "--with-apr-util=/usr"
     end
 
     if build.with? "ruby"
       args << "--with-ruby-sitedir=#{lib}/ruby"
       # Peg to system Ruby
       args << "RUBY=/usr/bin/ruby"
+    end
+
+    # If Python is built universally, then extensions built with that Python
+    # are too. This default behaviour is not desired when building an extension
+    # for a single architecture.
+    if build.with?("python") && (which "python").universal? && !build.universal?
+      ENV["ARCHFLAGS"] = "-arch #{MacOS.preferred_arch}"
     end
 
     # The system Python is built with llvm-gcc, so we override this
@@ -168,6 +180,7 @@ class Subversion < Formula
     if build.with? "python"
       system "make", "swig-py"
       system "make", "install-swig-py"
+      (lib/"python2.7/site-packages").install_symlink Dir["#{lib}/svn-python/*"]
     end
 
     if build.with? "perl"
@@ -182,7 +195,7 @@ class Subversion < Formula
         arches = "-arch #{Hardware::CPU.arch_64_bit}"
       end
 
-      perl_core = Pathname.new(`perl -MConfig -e 'print $Config{archlib}'`)+'CORE'
+      perl_core = Pathname.new(`perl -MConfig -e 'print $Config{archlib}'`)+"CORE"
       unless perl_core.exist?
         onoe "perl CORE directory does not exist in '#{perl_core}'"
       end
@@ -210,11 +223,6 @@ class Subversion < Formula
       system "make", "swig-rb", "EXTRA_SWIG_LDFLAGS=-L/usr/lib"
       system "make", "install-swig-rb"
     end
-  end
-
-  test do
-    system "#{bin}/svnadmin", "create", "test"
-    system "#{bin}/svnadmin", "verify", "test"
   end
 
   def caveats
@@ -248,7 +256,12 @@ class Subversion < Formula
       EOS
     end
 
-    return s.empty? ? nil : s
+    s
+  end
+
+  test do
+    system "#{bin}/svnadmin", "create", "test"
+    system "#{bin}/svnadmin", "verify", "test"
   end
 end
 
@@ -285,3 +298,17 @@ index a60430b..bd9b017 100644
      INC  => join(' ', $includes, $cppflags,
                   " -I$swig_srcdir/perl/libsvn_swig_perl",
                   " -I$svnlib_srcdir/include",
+
+diff --git a/build/get-py-info.py b/build/get-py-info.py
+index 29a6c0a..dd1a5a8 100644
+--- a/build/get-py-info.py
++++ b/build/get-py-info.py
+@@ -83,7 +83,7 @@ def link_options():
+   options = sysconfig.get_config_var('LDSHARED').split()
+   fwdir = sysconfig.get_config_var('PYTHONFRAMEWORKDIR')
+
+-  if fwdir and fwdir != "no-framework":
++  if fwdir and fwdir != "no-framework" and sys.platform != 'darwin':
+
+     # Setup the framework prefix
+     fwprefix = sysconfig.get_config_var('PYTHONFRAMEWORKPREFIX')

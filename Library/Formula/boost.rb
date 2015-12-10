@@ -1,15 +1,17 @@
 class Boost < Formula
+  desc "Collection of portable C++ source libraries"
   homepage "http://www.boost.org"
-  url "https://downloads.sourceforge.net/project/boost/boost/1.57.0/boost_1_57_0.tar.bz2"
-  sha1 "e151557ae47afd1b43dc3fac46f8b04a8fe51c12"
+  url "https://downloads.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.bz2"
+  sha256 "727a932322d94287b62abb1bd2d41723eec4356a7728909e38adb65ca25241ca"
 
   head "https://github.com/boostorg/boost.git"
 
   bottle do
     cellar :any
-    sha1 "5eaa834239277ba3fabdf0f6664400e4e2ff29b4" => :yosemite
-    sha1 "4475c631c1107d50a4da54db5d5cbf938b890a9a" => :mavericks
-    sha1 "4ba6d875fe24548b8af3c0b6631ded562d2da40f" => :mountain_lion
+    revision 1
+    sha256 "1e664fbdfe84de7bdc91154972073587856b47c12433106e9987fa3772534b3a" => :el_capitan
+    sha256 "b828f7f58d21ba4850507e4d5b7d44dae89649c3b8e0af758b746e8b3f17d8c1" => :yosemite
+    sha256 "a404a68cdd9a107b38b0467226e4077aa14d1b858b4931e9fa6a4c100092ea73" => :mavericks
   end
 
   env :userpaths
@@ -31,14 +33,34 @@ class Boost < Formula
     depends_on :mpi => [:cc, :cxx, :optional]
   end
 
+  stable do
+    # Fixed compilation of operator<< into a record ostream, when
+    # the operator right hand argument is not directly supported by
+    # formatting_ostream. Fixed https://svn.boost.org/trac/boost/ticket/11549
+    # from https://github.com/boostorg/log/commit/7da193f.patch
+    patch do
+      url "https://gist.githubusercontent.com/tdsmith/bc76ddea1e2bdb2a3a18/raw/03d125b12a4b03c28ee011a2d6d42a8137061a3b/boost-log.patch"
+      sha256 "a49fd7461d9f3b478d2bddac19adca93fe0fabab71ee67e8f140cbd7d42d6870"
+    end
+
+    # Fixed missing symbols in libboost_log_setup (on mac/clang)
+    # from https://github.com/boostorg/log/commit/870284ed31792708a6139925d00a0aadf46bf09f
+    patch do
+      url "https://gist.githubusercontent.com/autosquid/a4974e112b754e03aad7/raw/985358f8909033eb7ad9aae8fbf60881ef70a275/boost-log_setup.patch"
+      sha256 "2c3a3bae1691df5f8fce8fbd4e5727d57bd4dd813748b70d7471c855c4f19d1c"
+    end
+  end
+
   fails_with :llvm do
     build 2335
     cause "Dropped arguments to functions when linking with boost"
   end
 
+  needs :cxx11 if build.cxx11?
+
   def install
     # https://svn.boost.org/trac/boost/ticket/8841
-    if build.with? "mpi" and build.with? "single"
+    if build.with?("mpi") && build.with?("single")
       raise <<-EOS.undent
         Building MPI support for both single and multi-threaded flavors
         is not supported.  Please use "--with-mpi" together with
@@ -116,6 +138,7 @@ class Boost < Formula
     end
 
     system "./bootstrap.sh", *bootstrap_args
+    system "./b2", "headers"
     system "./b2", *args
   end
 

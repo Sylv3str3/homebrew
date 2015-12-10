@@ -1,50 +1,68 @@
-require "formula"
-
 class Dmd < Formula
+  desc "D programming language compiler for OS X"
   homepage "http://dlang.org"
-  url "https://github.com/D-Programming-Language/dmd/archive/v2.066.1.tar.gz"
-  sha1 "7be9737f97a494870446c881e185bec41f337792"
+
+  stable do
+    url "https://github.com/D-Programming-Language/dmd/archive/v2.069.2.tar.gz"
+    sha256 "61159da964eb826d9e2d9fd8ca8efbbfbf10671734f3b1934874d11c5757ddac"
+
+    resource "druntime" do
+      url "https://github.com/D-Programming-Language/druntime/archive/v2.069.2.tar.gz"
+      sha256 "469c5373f7368beead5df2d8cab49805b5faf1aa7fd639fc8df7a68572728db3"
+    end
+
+    resource "phobos" do
+      url "https://github.com/D-Programming-Language/phobos/archive/v2.069.2.tar.gz"
+      sha256 "241e426282a17c2e350701f38d87bd4ad675bfad1d3e92d9678a4578efed4fa0"
+    end
+
+    resource "tools" do
+      url "https://github.com/D-Programming-Language/tools/archive/v2.069.2.tar.gz"
+      sha256 "fc885b857f059e2992e317ecdd0d57ec284ce71fb7ddb89b65cb37cc9a1b492e"
+    end
+  end
 
   bottle do
-    sha1 "6cb24133ba8e8973442d13b358dc14ea7f9d8c43" => :yosemite
-    sha1 "19e104830f0e6dbb4a422fd141254af784268a4d" => :mavericks
-    sha1 "c7c4f4b32f5e88c73f0efb8eb90d92a7956694e6" => :mountain_lion
+    sha256 "35112e84d8e6f4ddb7635772b54e4f362f2ba780e7e95e27b1982660f822cb15" => :el_capitan
+    sha256 "2a6a9f32fb66c94e481f211fa7474838b84c020326453fb294075d2748c02453" => :yosemite
+    sha256 "10e5b4e9acb6884debf1cd8e16ddc4f7cf78643d293749d3327d867335c006c5" => :mavericks
   end
 
-  resource "druntime" do
-    url "https://github.com/D-Programming-Language/druntime/archive/v2.066.1.tar.gz"
-    sha1 "614e2944c470944125ba6bc94a78c1cf0a41ad5a"
-  end
+  head do
+    url "https://github.com/D-Programming-Language/dmd.git"
 
-  resource "phobos" do
-    url "https://github.com/D-Programming-Language/phobos/archive/v2.066.1.tar.gz"
-    sha1 "58e48b33cffbab4acb5e6d6f376ea209ce8e2114"
-  end
+    resource "druntime" do
+      url "https://github.com/D-Programming-Language/druntime.git"
+    end
 
-  resource "tools" do
-    url "https://github.com/D-Programming-Language/tools/archive/v2.066.1.tar.gz"
-    sha1 "fc64b35364cf76d7270e4a8fe41203e0b4dde11c"
+    resource "phobos" do
+      url "https://github.com/D-Programming-Language/phobos.git"
+    end
+
+    resource "tools" do
+      url "https://github.com/D-Programming-Language/tools.git"
+    end
   end
 
   def install
     make_args = ["INSTALL_DIR=#{prefix}", "MODEL=#{Hardware::CPU.bits}", "-f", "posix.mak"]
 
-    system "make", "SYSCONFDIR=#{etc}", "TARGET_CPU=X86", "RELEASE=1", *make_args
+    system "make", "SYSCONFDIR=#{etc}", "TARGET_CPU=X86", "AUTO_BOOTSTRAP=1", "RELEASE=1", *make_args
 
     bin.install "src/dmd"
     prefix.install "samples"
     man.install Dir["docs/man/*"]
 
-    conf = etc/"dmd.conf"
-
-    if conf.exist?
-      inreplace conf, /^DFLAGS=.+$/, "DFLAGS=-I#{include}/d2 -L-L#{lib}"
-    else
-      conf.write <<-EOS.undent
+    # A proper dmd.conf is required for later build steps:
+    conf = buildpath/"dmd.conf"
+    # Can't use opt_include or opt_lib here because dmd won't have been
+    # linked into opt by the time this build runs:
+    conf.write <<-EOS.undent
         [Environment]
         DFLAGS=-I#{include}/d2 -L-L#{lib}
         EOS
-    end
+    etc.install conf
+    install_new_dmd_conf
 
     make_args.unshift "DMD=#{bin}/dmd"
 
@@ -58,11 +76,33 @@ class Dmd < Formula
     cp_r ["phobos/std", "phobos/etc"], include/"d2"
     lib.install Dir["druntime/lib/*", "phobos/**/libphobos2.a"]
 
-
     resource("tools").stage do
-      inreplace "posix.mak", "install: $(TOOLS) $(CURL_TOOLS)", "install: $(TOOLS)"
+      inreplace "posix.mak", "install: $(TOOLS) $(CURL_TOOLS)", "install: $(TOOLS) $(ROOT)/dustmite"
       system "make", "install", *make_args
     end
+  end
+
+  # Previous versions of this formula may have left in place an incorrect
+  # dmd.conf.  If it differs from the newly generated one, move it out of place
+  # and warn the user.
+  # This must be idempotent because it may run from both install() and
+  # post_install() if the user is running `brew install --build-from-source`.
+  def install_new_dmd_conf
+    conf = etc/"dmd.conf"
+
+    # If the new file differs from conf, etc.install drops it here:
+    new_conf = etc/"dmd.conf.default"
+    # Else, we're already using the latest version:
+    return unless new_conf.exist?
+
+    backup = etc/"dmd.conf.old"
+    opoo "An old dmd.conf was found and will be moved to #{backup}."
+    mv conf, backup
+    mv new_conf, conf
+  end
+
+  def post_install
+    install_new_dmd_conf
   end
 
   test do

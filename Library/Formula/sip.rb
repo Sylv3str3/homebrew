@@ -1,18 +1,22 @@
 class Sip < Formula
-  homepage "http://www.riverbankcomputing.co.uk/software/sip"
-  url "https://downloads.sf.net/project/pyqt/sip/sip-4.16.5/sip-4.16.5.tar.gz"
-  sha1 "d5d7b6765de8634eccf48a250dbd915f01b2a771"
+  desc "Tool to create Python bindings for C and C++ libraries"
+  homepage "https://www.riverbankcomputing.com/software/sip/intro"
+  url "https://downloads.sourceforge.net/project/pyqt/sip/sip-4.16.9/sip-4.16.9.tar.gz"
+  sha256 "dbe173aa566e26ca0bb5bcbc1d30ef780f416267bb3b5df48149a737ea6b0555"
 
   bottle do
+    cellar :any_skip_relocation
     revision 1
-    sha1 "ac110e13e8b0f3f3c908fe4e9b4f6a010d483b64" => :yosemite
-    sha1 "d7cbfc32de5096fd1aa20a9123fba628ce546bf0" => :mavericks
-    sha1 "c67e51ac70a5258c16d6694010f2b9fd2363f346" => :mountain_lion
+    sha256 "902c988504e52b3a69742b3b13b08f4ac4d33f46b80e65201a692417a95e68c3" => :el_capitan
+    sha256 "a88bff5227829979cc96ccb956f73e3a39c1e8e885f02d39e30a6040faf4d2e8" => :yosemite
+    sha256 "777e09e3635c2f445146e5f4612a3f812a7c40ce2ba47309703a0df1163992f2" => :mavericks
+    sha256 "8832546d36baa62fdecd0df427ba4f3b02ab2f39fc5fcb47f114ae5020f11342" => :mountain_lion
   end
 
-  head "http://www.riverbankcomputing.co.uk/hg/sip", :using => :hg
+  head "https://www.riverbankcomputing.com/hg/sip", :using => :hg
 
-  depends_on :python => :recommended
+  option "without-python", "Build without python2 support"
+  depends_on :python => :recommended if MacOS.version <= :snow_leopard
   depends_on :python3 => :optional
 
   if build.without?("python3") && build.without?("python")

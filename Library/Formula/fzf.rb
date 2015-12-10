@@ -1,15 +1,17 @@
-require "formula"
 require "language/go"
 
 class Fzf < Formula
+  desc "Fuzzy finder for your shell"
   homepage "https://github.com/junegunn/fzf"
-  url "https://github.com/junegunn/fzf/archive/0.9.3.tar.gz"
-  sha1 "0d18bf1c084e31187910202ee1e2e6bdcf26d97a"
+  url "https://github.com/junegunn/fzf/archive/0.10.9.tar.gz"
+  sha256 "55a9b8d27f3832be569519bcd3afe1f1e345daaa8b8b6523aedff661954f42fb"
+  head "https://github.com/junegunn/fzf.git"
 
   bottle do
-    sha1 "8df0dad7e5da5ea4211aa0069c9e04e107f26314" => :yosemite
-    sha1 "9f760d6dd1a00d348675c08e1a643ab5433d95d6" => :mavericks
-    sha1 "ca152e6e4f893f5581b93f809b47b9e80fc2b507" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "3f788e4e27755e6973b67bb28885654d5861e0a5cfae3120f6dc49bfe1f78abc" => :el_capitan
+    sha256 "b518e6cece9536d2add097c09003f96d25cf2a70240fec60a6f0be8ed7d60077" => :yosemite
+    sha256 "18f48d17cd9b6e746e6090d89119d443318d5a3ba4853007c4002cb6413b046c" => :mavericks
   end
 
   depends_on "go" => :build
@@ -35,16 +37,20 @@ class Fzf < Formula
       bin.install "fzf"
     end
 
-    prefix.install %w[install uninstall fzf-completion.bash fzf-completion.zsh LICENSE]
+    prefix.install %w[install uninstall LICENSE]
+    (prefix/"shell").install %w[bash zsh fish].map { |s| "shell/key-bindings.#{s}" }
+    (prefix/"shell").install %w[bash zsh].map { |s| "shell/completion.#{s}" }
     (prefix/"plugin").install "plugin/fzf.vim"
+    man1.install "man/man1/fzf.1"
+    bin.install "bin/fzf-tmux"
   end
 
   def caveats; <<-EOS.undent
     To install useful keybindings and fuzzy completion:
-      #{prefix}/install
+      #{opt_prefix}/install
 
     To use fzf in Vim, add the following line to your .vimrc:
-      set rtp+=#{prefix}
+      set rtp+=#{opt_prefix}
     EOS
   end
 

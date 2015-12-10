@@ -1,51 +1,58 @@
-require 'formula'
-
 class Bitlbee < Formula
-  homepage 'http://www.bitlbee.org/'
-  url 'http://get.bitlbee.org/src/bitlbee-3.2.2.tar.gz'
-  sha1 '7e3cfe2b6bf4e8e603c74e7587307a6f5d267e9c'
+  desc "IRC to other chat networks gateway"
+  homepage "https://www.bitlbee.org/"
+  url "http://get.bitlbee.org/src/bitlbee-3.4.1.tar.gz"
+  sha256 "500a0b19943040d67458eb3beb0a63d004abb2aa54a777addeb2a895d4f5c0e1"
+  head "https://github.com/bitlbee/bitlbee.git"
 
   bottle do
-    sha1 "4a639d88aa819d23d6020a36602097474f66357d" => :mavericks
-    sha1 "5312823fead39bba80b712bcedca4f9a7fc9211d" => :mountain_lion
-    sha1 "c21d19af516d959eb2a0b4b5ff534a66678d419d" => :lion
+    revision 1
+    sha256 "c552e34eb416291007a14c7ed0cdeae340d80ea1fdde2a4897be212f1975d60f" => :el_capitan
+    sha256 "8b2e589ed8072562ce34d891b8e077e60654c845f4e77c0b0b9c80f0665c0766" => :yosemite
+    sha256 "6e59b6545bd5c51a35d28f3411d76870414b5ada5bd0023098f1ad68ad4ff97e" => :mavericks
   end
 
-  option 'with-pidgin', "Use finch/libpurple for all communication with instant messaging networks"
-  option 'with-libotr', "Build with otr (off the record) support"
+  option "with-pidgin", "Use finch/libpurple for all communication with instant messaging networks"
+  option "with-libotr", "Build with otr (off the record) support"
+  option "with-libevent", "Use libevent for the event-loop handling rather than glib."
 
   deprecated_option "with-finch" => "with-pidgin"
 
-  depends_on 'pkg-config' => :build
-  depends_on 'glib'
-  depends_on 'gnutls'
-  depends_on 'libgcrypt'
-  depends_on 'pidgin' => :optional
-  depends_on 'libotr' => :optional
+  depends_on "pkg-config" => :build
+  depends_on "gettext"
+  depends_on "glib"
+  depends_on "gnutls"
+  depends_on "libgcrypt"
+  depends_on "pidgin" => :optional
+  depends_on "libotr" => :optional
+  depends_on "libevent" => :optional
 
   def install
-    args = ["--prefix=#{prefix}",
-            "--debug=0",
-            "--ssl=gnutls",
-            "--pidfile=#{var}/bitlbee/run/bitlbee.pid",
-            "--config=#{var}/bitlbee/lib/",
-            "--ipsocket=#{var}/bitlbee/run/bitlbee.sock"]
+    args = %W[
+      --prefix=#{prefix}
+      --debug=0
+      --ssl=gnutls
+      --pidfile=#{var}/bitlbee/run/bitlbee.pid
+      --config=#{var}/bitlbee/lib/
+      --ipsocket=#{var}/bitlbee/run/bitlbee.sock
+    ]
 
     args << "--purple=1" if build.with? "pidgin"
     args << "--otr=1" if build.with? "libotr"
+    args << "--events=libevent" if build.with? "libevent"
 
     system "./configure", *args
 
     # This build depends on make running first.
     system "make"
-    system "make install"
+    system "make", "install"
     # Install the dev headers too
-    system "make install-dev"
+    system "make", "install-dev"
     # This build has an extra step.
-    system "make install-etc"
+    system "make", "install-etc"
 
-    (var+"bitlbee/run").mkpath
-    (var+"bitlbee/lib").mkpath
+    (var/"bitlbee/run").mkpath
+    (var/"bitlbee/lib").mkpath
   end
 
   plist_options :manual => "bitlbee -D"
@@ -73,6 +80,8 @@ class Bitlbee < Formula
           <string>IPv4</string>
           <key>SockProtocol</key>
           <string>TCP</string>
+          <key>SockNodeName</key>
+          <string>127.0.0.1</string>
           <key>SockServiceName</key>
           <string>6667</string>
           <key>SockType</key>
@@ -87,5 +96,9 @@ class Bitlbee < Formula
     </dict>
     </plist>
     EOS
+  end
+
+  test do
+    shell_output("#{sbin}/bitlbee -V", 1)
   end
 end

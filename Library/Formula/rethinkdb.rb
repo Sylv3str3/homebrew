@@ -1,19 +1,18 @@
 class Rethinkdb < Formula
-  homepage "http://www.rethinkdb.com/"
-  url "http://download.rethinkdb.com/dist/rethinkdb-1.16.2-1.tgz"
-  version "1.16.2-1"
-  sha1 "17cf96e18ddd7a8e909c6d4339d45b32f186b7c0"
+  desc "The open-source database for the realtime web"
+  homepage "https://www.rethinkdb.com/"
+  url "https://download.rethinkdb.com/dist/rethinkdb-2.2.1.tgz"
+  sha256 "6611b4e62020a68c23e0a1f0a517b97677e0358c261a3e188d14b02b014a2c9e"
 
   bottle do
-    sha1 "d0d5f83c19ff5b20b9adee82339c7cf0798f76f9" => :yosemite
-    sha1 "6ce74cea321c3aa31f458d73d1a9c9576e3120e7" => :mavericks
-    sha1 "412b9e0d0f27234ff3e4efc8802698d11a3e768f" => :mountain_lion
+    cellar :any
+    revision 1
+    sha256 "952e669603cf7c4a91dc0af3c1ae0b6b7489d3573da2c88d7074f4558867c7bc" => :el_capitan
+    sha256 "843c3ccbcf004becaaaaa582a1bbcd29b2671143a7fe0323ff14f6df0b5155c5" => :yosemite
+    sha256 "2ead827b843c81e0d3b48c469c665f81a92dbe48dfc530d06060d06e36c49381" => :mavericks
   end
 
   depends_on :macos => :lion
-  # Embeds an older V8, whose gyp still requires the full Xcode
-  # Reported upstream: https://github.com/rethinkdb/rethinkdb/issues/2581
-  depends_on :xcode => :build
   depends_on "boost" => :build
   depends_on "openssl"
 
@@ -25,22 +24,19 @@ class Rethinkdb < Formula
   def install
     args = ["--prefix=#{prefix}"]
 
-    # brew's v8 is too recent. rethinkdb uses an older v8 API
-    args += ["--fetch", "v8"]
-
     # rethinkdb requires that protobuf be linked against libc++
     # but brew's protobuf is sometimes linked against libstdc++
     args += ["--fetch", "protobuf"]
-
-    # support gcc with boost 1.56
-    # https://github.com/rethinkdb/rethinkdb/issues/3044#issuecomment-55471981
-    args << "CXXFLAGS=-DBOOST_VARIANT_DO_NOT_USE_VARIADIC_TEMPLATES"
 
     system "./configure", *args
     system "make"
     system "make", "install-osx"
 
-    mkdir_p "#{var}/log/rethinkdb"
+    (var/"log/rethinkdb").mkpath
+
+    inreplace "packaging/assets/config/default.conf.sample",
+              /^# directory=.*/, "directory=#{var}/rethinkdb"
+    etc.install "packaging/assets/config/default.conf.sample" => "rethinkdb.conf"
   end
 
   def plist; <<-EOS.undent
@@ -53,8 +49,8 @@ class Rethinkdb < Formula
       <key>ProgramArguments</key>
       <array>
           <string>#{opt_bin}/rethinkdb</string>
-          <string>-d</string>
-          <string>#{var}/rethinkdb</string>
+          <string>--config-file</string>
+          <string>#{etc}/rethinkdb.conf</string>
       </array>
       <key>WorkingDirectory</key>
       <string>#{HOMEBREW_PREFIX}</string>

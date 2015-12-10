@@ -1,14 +1,13 @@
-require "formula"
-
 class Ola < Formula
-  homepage "http://www.openlighting.org/ola/"
-  url "https://github.com/OpenLightingProject/ola/releases/download/0.9.3/ola-0.9.3.tar.gz"
-  sha1 "f6a81087761218063a4bb8006b73ffa407cd0170"
+  desc "Open Lighting Architecture for lighting control information"
+  homepage "https://www.openlighting.org/ola/"
+  url "https://github.com/OpenLightingProject/ola/releases/download/0.9.8/ola-0.9.8.tar.gz"
+  sha256 "1c1e0fc1810b0c0857563bc481c872b8ed5d2e62c97c1083c82eabd7ebbd70a6"
 
   bottle do
-    sha1 "084b25099b2eaf5d90a69ebc20b43c0cf338b614" => :yosemite
-    sha1 "64e7e1a34c1840a7315449a3cc037f07bb75407a" => :mavericks
-    sha1 "4a4d4b3b9909d0e40b9c4658fc7f41713bc20a0a" => :mountain_lion
+    sha256 "4cdc7b5055bdbc0242a1d424b7436cbdac39f60d38f259931ff0b86b58e2b42a" => :el_capitan
+    sha256 "848b12a934e10cdc179d1013ba0ac8d1770d27a2bdc90ffcd515c5dfe9203047" => :yosemite
+    sha256 "f341009e874078f04be3d84e95a28331df3f372ac53241f54c4a63b4eae5e9dd" => :mavericks
   end
 
   head do
@@ -20,6 +19,7 @@ class Ola < Formula
   end
 
   option :universal
+  option "with-ftdi", "Install FTDI USB plugin for OLA."
 
   depends_on "pkg-config" => :build
   depends_on "cppunit"
@@ -30,6 +30,10 @@ class Ola < Formula
   depends_on "ossp-uuid"
   depends_on :python => :optional
   depends_on "doxygen" => :optional
+  if build.with? "ftdi"
+    depends_on "libftdi"
+    depends_on "libftdi0"
+  end
 
   def install
     ENV.universal_binary if build.universal?

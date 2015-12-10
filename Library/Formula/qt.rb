@@ -1,38 +1,48 @@
 class Qt < Formula
-  homepage "http://qt-project.org/"
+  desc "Cross-platform application and UI framework"
+  homepage "https://www.qt.io/"
+  revision 1
 
   stable do
-    url "https://download.qt.io/official_releases/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz"
-    mirror "http://qtmirror.ics.com/pub/qtproject/official_releases/qt/4.8/4.8.6/qt-everywhere-opensource-src-4.8.6.tar.gz"
-    sha1 "ddf9c20ca8309a116e0466c42984238009525da6"
-
-    # This patch should be able to be removed with the next stable Qt4 release.
-    patch do
-      url "https://raw.githubusercontent.com/DomT4/scripts/440e3cafde5bf6ec6f50cd28fa5bf89c280f1b53/Homebrew_Resources/Qt/qt4patch.diff"
-      sha1 "57246a33460246118a1fab7460c79f2077d3a929"
-    end
+    url "https://download.qt.io/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz"
+    mirror "https://www.mirrorservice.org/sites/download.qt-project.org/official_releases/qt/4.8/4.8.7/qt-everywhere-opensource-src-4.8.7.tar.gz"
+    sha256 "e2882295097e47fe089f8ac741a95fef47e0a73a3f3cdf21b56990638f626ea0"
   end
 
   bottle do
-    revision 6
-    sha1 "bedfe4e950676a85f9653732d33767fbcce45da5" => :yosemite
-    sha1 "8ee072473ababd49fe85bc6f9bf5ddcdafea8c26" => :mavericks
-    sha1 "668ac1a65811e0ff23230a698725b383c61c1d13" => :mountain_lion
+    sha256 "48e2e4d7f4659409c74e6acb9b59fdf9ab5d8e4b7f9b438a73e3d0ca03635e93" => :el_capitan
+    sha256 "8e041b0a48c8a0785022c8a77e8c40efeb9d57cd701b635cc0a7ce46692c0c5f" => :yosemite
+    sha256 "fe687f9a9b657d33b7c11ad4ccd7208deddd8e96d2104df2df98de13b0c5d5d7" => :mavericks
   end
 
-  head "https://gitorious.org/qt/qt.git", :branch => "4.8"
+  # Backport of Qt5 commit to fix the fatal build error on OS X El Capitan.
+  # http://code.qt.io/cgit/qt/qtbase.git/commit/?id=b06304e164ba47351fa292662c1e6383c081b5ca
+  if MacOS.version >= :el_capitan
+    patch do
+      url "https://raw.githubusercontent.com/Homebrew/patches/480b7142c4e2ae07de6028f672695eb927a34875/qt/el-capitan.patch"
+      sha256 "c8a0fa819c8012a7cb70e902abb7133fc05235881ce230235d93719c47650c4e"
+    end
+  end
+
+  head "https://code.qt.io/qt/qt.git", :branch => "4.8"
 
   option :universal
   option "with-qt3support", "Build with deprecated Qt3Support module support"
   option "with-docs", "Build documentation"
   option "with-developer", "Build and link with developer options"
 
+  depends_on "openssl"
   depends_on "d-bus" => :optional
   depends_on "mysql" => :optional
   depends_on "postgresql" => :optional
 
   deprecated_option "qtdbus" => "with-d-bus"
   deprecated_option "developer" => "with-developer"
+
+  resource "test-project" do
+    url "https://gist.github.com/tdsmith/f55e7e69ae174b5b5a03.git",
+        :revision => "6f565390395a0259fa85fdd3a4f1968ebcd1cc7d"
+  end
 
   def install
     ENV.universal_binary if build.universal?
@@ -45,14 +55,18 @@ class Qt < Formula
             "-cocoa", "-fast", "-release"]
 
     if ENV.compiler == :clang
-        args << "-platform"
+      args << "-platform"
 
-        if MacOS.version >= :mavericks
-          args << "unsupported/macx-clang-libc++"
-        else
-          args << "unsupported/macx-clang"
-        end
+      if MacOS.version >= :mavericks
+        args << "unsupported/macx-clang-libc++"
+      else
+        args << "unsupported/macx-clang"
+      end
     end
+
+    args << "-openssl-linked"
+    args << "-I" << Formula["openssl"].opt_include
+    args << "-L" << Formula["openssl"].opt_lib
 
     args << "-plugin-sql-mysql" if build.with? "mysql"
     args << "-plugin-sql-psql" if build.with? "postgresql"
@@ -74,11 +88,11 @@ class Qt < Formula
 
     args << "-nomake" << "docs" if build.without? "docs"
 
-    if MacOS.prefer_64_bit? or build.universal?
+    if MacOS.prefer_64_bit? || build.universal?
       args << "-arch" << "x86_64"
     end
 
-    if !MacOS.prefer_64_bit? or build.universal?
+    if !MacOS.prefer_64_bit? || build.universal?
       args << "-arch" << "x86"
     end
 
@@ -109,7 +123,11 @@ class Qt < Formula
   end
 
   test do
-    system "#{bin}/qmake", "-project"
+    Encoding.default_external = "UTF-8" unless RUBY_VERSION.start_with? "1."
+    resource("test-project").stage testpath
+    system bin/"qmake"
+    system "make"
+    assert_match /GitHub/, pipe_output(testpath/"qtnetwork-test 2>&1", nil, 0)
   end
 
   def caveats; <<-EOS.undent

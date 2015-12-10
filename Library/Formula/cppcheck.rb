@@ -1,14 +1,14 @@
 class Cppcheck < Formula
-  homepage "http://sourceforge.net/apps/mediawiki/cppcheck/index.php?title=Main_Page"
-  url "https://github.com/danmar/cppcheck/archive/1.68.tar.gz"
-  sha1 "f08ef07f750f92fafe4f960166072e9d1088d74e"
-
+  desc "Static analysis of C and C++ code"
+  homepage "https://sourceforge.net/projects/cppcheck/"
+  url "https://github.com/danmar/cppcheck/archive/1.71.tar.gz"
+  sha256 "49f8d44516a1534eb01e3cc8300d60c3577c5e4339336defaf213d08ff914f1b"
   head "https://github.com/danmar/cppcheck.git"
 
   bottle do
-    sha1 "8191b30ed8620ed5de071bbe80053125f80438bc" => :yosemite
-    sha1 "168ff653869991d73f5e49493bd690e17a56cee9" => :mavericks
-    sha1 "d367cd0f3b392e5a93868179402c76e708b26b62" => :mountain_lion
+    sha256 "57f0796aeae7641466857abb9f55786c62cd1970941756813f9559cf370a25e2" => :el_capitan
+    sha256 "6f7e66fefcf465e8cf3171d9aa63584fe3eaaf9e7aa4c8c8e6b7f519bb7950cc" => :yosemite
+    sha256 "ba9a7d4674ced19e545d25d973ea2127faa91a011940b925200f9cc177c34081" => :mavericks
   end
 
   option "without-rules", "Build without rules (no pcre dependency)"
@@ -19,7 +19,11 @@ class Cppcheck < Formula
   depends_on "pcre" if build.with? "rules"
   depends_on "qt" if build.with? "gui"
 
+  needs :cxx11
+
   def install
+    ENV.cxx11
+
     # Man pages aren't installed as they require docbook schemas.
 
     # Pass to make variables.
@@ -29,25 +33,19 @@ class Cppcheck < Formula
       system "make", "HAVE_RULES=no", "CFGDIR=#{prefix}/cfg"
     end
 
-    system "make", "DESTDIR=#{prefix}", "BIN=#{bin}", "CFGDIR=#{prefix}/cfg", "install"
-
-    # make sure cppcheck can find its configure directory, #26194
-    prefix.install "cfg"
+    # CFGDIR is relative to the prefix for install, don't add #{prefix}.
+    system "make", "DESTDIR=#{prefix}", "BIN=#{bin}", "CFGDIR=/cfg", "install"
 
     if build.with? "gui"
       cd "gui" do
-        # fix make not finding cfg directory:
-        # https://github.com/Homebrew/homebrew/issues/27756
-        inreplace "gui.qrc", "../cfg/", "#{prefix}/cfg/"
-
         if build.with? "rules"
-          system "qmake"
+          system "qmake", "HAVE_RULES=yes"
         else
           system "qmake", "HAVE_RULES=no"
         end
 
         system "make"
-        bin.install "cppcheck-gui.app"
+        prefix.install "cppcheck-gui.app"
       end
     end
   end

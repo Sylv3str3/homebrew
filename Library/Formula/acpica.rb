@@ -1,20 +1,22 @@
 class Acpica < Formula
+  desc "OS-independent implementation of the ACPI specification"
   homepage "https://www.acpica.org/"
+  url "https://acpica.org/sites/acpica/files/acpica-unix2-20150717.tar.gz"
+  sha256 "dd60f846ad8393d89d2cbadf362c6547c5e53405f5ee51097c90db3636f79e0a"
   head "https://github.com/acpica/acpica.git"
-  url "https://acpica.org/sites/acpica/files/acpica-unix2-20150204.tar.gz"
-  sha1 "8c5514b1171afb40dca40289581c8ba3f17583e1"
 
   bottle do
-    cellar :any
-    sha1 "dbb1b43a1702b3eb2855dd4df1ffbb81a4e5e3c1" => :yosemite
-    sha1 "5c2ded46bf71f187b637fd748d541985493ddf57" => :mavericks
-    sha1 "c546de5f0bd9ead75dc58baba0489e0a37eb0f60" => :mountain_lion
+    cellar :any_skip_relocation
+    revision 1
+    sha256 "cc725e69697566a45bc3398020ed869428096585f1a719c327cca44179bb4ab6" => :el_capitan
+    sha256 "97f48c365f61d024a47dc37d074bf12b3946b006e4f047f6b06ab47e98c58dfe" => :yosemite
+    sha256 "2dee2a8911b99c8cc52b1534d9f6f0e87c04521d81a1b89c5ac46f7a149cd4db" => :mavericks
   end
 
   def install
     ENV.deparallelize
-    system "make", "HOST=_APPLE", "PREFIX=#{prefix}"
-    system "make", "install", "HOST=_APPLE", "PREFIX=#{prefix}"
+    system "make", "PREFIX=#{prefix}"
+    system "make", "install", "PREFIX=#{prefix}"
   end
 
   test do

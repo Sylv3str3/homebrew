@@ -1,21 +1,21 @@
-require "formula"
-
 class Qbs < Formula
-  homepage "http://qt-project.org/wiki/qbs"
-  url "http://download.qt-project.org/official_releases/qbs/1.3.2/qbs-1.3.2.src.tar.gz"
-  sha1 "ce2d807c145e239d39e360521d62486eb1e3d108"
+  desc "Qt Build Suite"
+  homepage "https://wiki.qt.io/Qt_Build_Suite"
+  url "https://download.qt.io/official_releases/qbs/1.4.3/qbs-src-1.4.3.tar.gz"
+  sha256 "0c47291ac578c1fc8f2bd6ab20fbeeb58630c4c6ddc085f6081ae570f825f787"
+  head "https://code.qt.io/qt-labs/qbs.git"
 
   bottle do
     cellar :any
-    sha1 "cc8d1816df4336ab9d8745e332efb3081ac8abf7" => :yosemite
-    sha1 "f95dc259474a8006364b62f7fcbc943783a6ccd9" => :mavericks
-    sha1 "bbdadfad3bc1d7a6024b42245999d460ad719515" => :mountain_lion
+    sha256 "5d94dc85f7d7f3215d9930cbabcf9a2ceb7ab3899468f78bbd628fe60f3216ff" => :el_capitan
+    sha256 "f2179c4003a7d2fff052844872218b4c94a8548ce3c6aa29359eba66c1ef3b0f" => :yosemite
+    sha256 "4cfecaa5d4dd45d6be7aa6a2ab6b3192f24dbed3b3839699cec3896dc86030a2" => :mavericks
   end
 
   depends_on "qt5"
 
   def install
-    system "qmake", "qbs.pro", "-r"
+    system "qmake", "qbs.pro", "-r", "QBS_INSTALL_PREFIX=/"
     system "make", "install", "INSTALL_ROOT=#{prefix}"
   end
 
@@ -36,6 +36,7 @@ class Qbs < Formula
       }
     EOS
 
-    system "#{bin}/qbs", "run", "-f", "test.qbp", "profile:clang"
+    system "#{bin}/qbs", "setup-toolchains", "--detect", "--settings-dir", testpath
+    system "#{bin}/qbs", "run", "--settings-dir", testpath, "-f", "test.qbp", "profile:clang"
   end
 end

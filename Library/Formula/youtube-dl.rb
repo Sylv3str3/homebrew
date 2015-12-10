@@ -1,18 +1,17 @@
-require "formula"
-
 # Please only update to versions that are published on PyPi as there are too
 # many releases for us to update to every single one:
 # https://pypi.python.org/pypi/youtube_dl
 class YoutubeDl < Formula
+  desc "Download YouTube videos from the command-line"
   homepage "https://rg3.github.io/youtube-dl/"
-  url "https://yt-dl.org/downloads/2015.02.24.2/youtube-dl-2015.02.24.2.tar.gz"
-  sha256 "bd5eb5f94b9b70ed386e39286652796d0cb27c10359ffa26a28c76f5a076f2e0"
+  url "https://yt-dl.org/downloads/2015.12.06/youtube-dl-2015.12.06.tar.gz"
+  sha256 "130be9fe481ce17a8d716e58324c837179099c5bb0789194e8e51b79b7c7b279"
 
   bottle do
-    cellar :any
-    sha1 "9cb845364f840ac1e1ec55945f9f7a2e568a7d11" => :yosemite
-    sha1 "c3e38972f687486ba93df0f03828dad01c7dcf99" => :mavericks
-    sha1 "7cd336062fc91a21dad11e9c9c4131d3fe4c0877" => :mountain_lion
+    cellar :any_skip_relocation
+    sha256 "d17a547da37ef712f98ee9036d7cf818f421753b36483a33b79773c56fc8b87a" => :el_capitan
+    sha256 "2ee2fbf00068bcee9309781cc37944407cc7648a3a5a444ff5f10cd5a18d4c30" => :yosemite
+    sha256 "e00500a912570c334b9ba00b2cd7c1314c674f0cfa35ef5fcd66863823d8f1c1" => :mavericks
   end
 
   head do
@@ -28,6 +27,7 @@ class YoutubeDl < Formula
     man1.install "youtube-dl.1"
     bash_completion.install "youtube-dl.bash-completion"
     zsh_completion.install "youtube-dl.zsh" => "_youtube-dl"
+    fish_completion.install "youtube-dl.fish"
   end
 
   def caveats
@@ -35,6 +35,7 @@ class YoutubeDl < Formula
   end
 
   test do
-    system "#{bin}/youtube-dl", "--simulate", "http://www.youtube.com/watch?v=he2a4xK8ctk"
+    system "#{bin}/youtube-dl", "--simulate", "https://www.youtube.com/watch?v=he2a4xK8ctk"
+    system "#{bin}/youtube-dl", "--simulate", "--yes-playlist", "https://www.youtube.com/watch?v=AEhULv4ruL4&list=PLZdCLR02grLrl5ie970A24kvti21hGiOf"
   end
 end

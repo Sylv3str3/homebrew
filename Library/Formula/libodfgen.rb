@@ -1,14 +1,16 @@
 class Libodfgen < Formula
-  homepage "http://sourceforge.net/p/libwpd/wiki/libodfgen/"
-  url "http://dev-www.libreoffice.org/src/libodfgen-0.1.3.tar.bz2"
-  mirror "https://downloads.sourceforge.net/project/libwpd/libodfgen/libodfgen-0.1.3/libodfgen-0.1.3.tar.bz2"
-  sha1 "f726a1811bc78c12b28995d1bff2561e820667ea"
+  desc "ODF export library for projects using librevenge"
+  homepage "https://sourceforge.net/p/libwpd/wiki/libodfgen/"
+  url "http://dev-www.libreoffice.org/src/libodfgen-0.1.4.tar.bz2"
+  mirror "https://downloads.sourceforge.net/project/libwpd/libodfgen/libodfgen-0.1.4/libodfgen-0.1.4.tar.bz2"
+  sha256 "f74999d2c93ac0cc077a0a9c36340daff29dc772992160ae81dd010345f72b80"
 
   bottle do
     cellar :any
-    sha1 "ad5415189434aad9adb7611fc5da37aeb364ac0e" => :yosemite
-    sha1 "8d363b8a40520295190f6b27837348310dadc264" => :mavericks
-    sha1 "bf1050d243bee37249b6944b447326b3cc275c7f" => :mountain_lion
+    revision 1
+    sha256 "9472f468c381ec54266f2a58fe062b240f2b9434ccd66b638a26e7d00d4b5f21" => :el_capitan
+    sha256 "507de249c787af8d91177ae195356c8004483c23e3fc4e3829cbe002787d43b6" => :yosemite
+    sha256 "fd1131394ab4c726564a69bf78b677dab5472f0e4563a089bddda5ff076e84fd" => :mavericks
   end
 
   depends_on "pkg-config" => :build

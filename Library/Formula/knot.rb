@@ -1,23 +1,33 @@
-require "formula"
-
 class Knot < Formula
+  desc "High-performance authoritative-only DNS server"
   homepage "https://www.knot-dns.cz/"
-  url "https://secure.nic.cz/files/knot-dns/knot-1.5.3.tar.gz"
-  sha1 "4692c5001472443d07ac088592b349793a968706"
+  url "https://secure.nic.cz/files/knot-dns/knot-1.6.6.tar.xz"
+  sha256 "6ccae42b0878201e2113a048317bf518acad70fe436b04e24da32703d27edf03"
 
-  head "https://gitlab.labs.nic.cz/labs/knot.git"
-
-  bottle do
-    sha1 "d28c63873e0ee6b98a01c4da1537d81f45dd468a" => :mavericks
-    sha1 "f81216eda0543ae546215b8739631db65594e7af" => :mountain_lion
-    sha1 "c6647467cfe8a3f84a3bedcfd93e6d2cb71f7436" => :lion
+  head do
+    url "https://gitlab.labs.nic.cz/labs/knot.git"
+    depends_on "automake" => :build
+    depends_on "autoconf" => :build
+    depends_on "libtool" => :build
+    depends_on "pkg-config" => :build
   end
 
-  depends_on "userspace-rcu"
-  depends_on "openssl"
+  bottle do
+    cellar :any
+    sha256 "90e45148b081f6c98c9d181e3b89f08ce0db4a47199c4d194b67d758420442a2" => :el_capitan
+    sha256 "40afc8d6991964587e1637847ad13cd4825d28064144fc1b5a3f7228705ea7c1" => :yosemite
+    sha256 "b100ac007518f53f4829b0cb45c67f287a0fc99ee1846b6526959635291b1ce8" => :mavericks
+  end
+
+  depends_on "gnutls"
+  depends_on "jansson"
   depends_on "libidn"
+  depends_on "nettle"
+  depends_on "openssl"
+  depends_on "userspace-rcu"
 
   def install
+    system "autoreconf", "-i", "-f" if build.head?
     system "./configure", "--disable-debug",
                           "--disable-dependency-tracking",
                           "--disable-silent-rules",
@@ -26,15 +36,15 @@ class Knot < Formula
                           "--with-rundir=#{var}/knot",
                           "--prefix=#{prefix}"
 
-    inreplace 'samples/Makefile', 'install-data-local:', 'disable-install-data-local:'
+    inreplace "samples/Makefile", "install-data-local:", "disable-install-data-local:"
 
     system "make"
     system "make", "install"
 
-    (buildpath + 'knot.conf').write(knot_conf)
-    etc.install 'knot.conf'
+    (buildpath/"knot.conf").write(knot_conf)
+    etc.install "knot.conf"
 
-    (var + 'knot').mkpath
+    (var/"knot").mkpath
   end
 
   def knot_conf; <<-EOS.undent

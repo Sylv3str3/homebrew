@@ -1,28 +1,31 @@
 class X264 < Formula
+  desc "H.264/AVC encoder"
   homepage "https://www.videolan.org/developers/x264.html"
   # the latest commit on the stable branch
-  url "https://git.videolan.org/git/x264.git", :revision => "6a301b6ee0ae8c78fb704e1cd86f4e861070f641"
-  version "r2495"
+  url "https://git.videolan.org/git/x264.git", :revision => "a0cd7d38acb6c31973228ab207e18344920e0aa3"
+  version "r2601"
 
   devel do
     # the latest commit on the master branch
-    url "https://git.videolan.org/git/x264.git", :revision => "40bb56814e56ed342040bdbf30258aab39ee9e89"
-    version "r2525"
+    url "https://git.videolan.org/git/x264.git", :revision => "75992107adcc8317ba2888e3957a7d56f16b5cd4"
+    version "r2638"
   end
 
   head "https://git.videolan.org/git/x264.git"
 
   bottle do
     cellar :any
-    sha1 "48aea1324df78e942257d63bcb9b1a0bbc32dfff" => :yosemite
-    sha1 "1cb4086a82a0f41925bfddfd69d868b882ffe197" => :mavericks
-    sha1 "f232c6e5ddad33c0b13e507c65cf760608957600" => :mountain_lion
+    sha256 "010cb2be57c48fb617749e583ad2fbeb148cc522b47d59b407dfb9f10f1f3a2b" => :el_capitan
+    sha256 "e093adfd1af594a592ace82f77bd59748e3040d263e507acd3d8ad2275292e16" => :yosemite
+    sha256 "977c077c5d38c1a5842bda75aec11831f4980ae258556b9bd9ba2184deb11faa" => :mavericks
   end
 
   depends_on "yasm" => :build
 
-  option "10-bit", "Build a 10-bit x264 (default: 8-bit)"
+  option "with-10-bit", "Build a 10-bit x264 (default: 8-bit)"
   option "with-mp4=", "Select mp4 output: none (default), l-smash or gpac"
+
+  deprecated_option "10-bit" => "with-10-bit"
 
   case ARGV.value "with-mp4"
   when "l-smash" then depends_on "l-smash"
@@ -41,9 +44,27 @@ class X264 < Formula
     elsif Formula["gpac"].installed?
       args << "--disable-lsmash"
     end
-    args << "--bit-depth=10" if build.include? "10-bit"
+    args << "--bit-depth=10" if build.with? "10-bit"
 
     system "./configure", *args
     system "make", "install"
+  end
+
+  test do
+    (testpath/"test.c").write <<-EOS.undent
+      #include <stdint.h>
+      #include <x264.h>
+
+      int main()
+      {
+          x264_picture_t pic;
+          x264_picture_init(&pic);
+          x264_picture_alloc(&pic, 1, 1, 1);
+          x264_picture_clean(&pic);
+          return 0;
+      }
+    EOS
+    system ENV.cc, "-lx264", "test.c", "-o", "test"
+    system "./test"
   end
 end
