@@ -45,7 +45,7 @@ HOMEBREW_CONTRIB = HOMEBREW_SEREPOSITORY/"Library/Contributions"
 
 # Where we store built products; /usr/local/Cellar if it exists,
 # otherwise a Cellar relative to the Repository.
-HOMEBREW_CELLAR = if ("~/.brew/Cellar").expand_path
+HOMEBREW_CELLAR = Pathname.new("~/.brew/Cellar").expand_path
 
 HOMEBREW_LOGS = Pathname.new(ENV["HOMEBREW_LOGS"] || "~/Library/Logs/Homebrew/").expand_path
 
